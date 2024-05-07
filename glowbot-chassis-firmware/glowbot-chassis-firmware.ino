@@ -203,9 +203,8 @@ void moveDemo() {
         carBackward();
         break;
       case 5:
-        carBackward();
-        break;
         parkCar();
+        break;        
       default:
         break;
     }
@@ -217,7 +216,7 @@ void loop() {
   // getKeyValue();  just used for bluetooth
   //getBluetoothData();
   //  keyEventHandle();  just IR remote stufff
-  getDistance();
+  getDistance();  // TODO: Check this is working
   voltageMeasure();
   setMotionState();
   // functionMode();
