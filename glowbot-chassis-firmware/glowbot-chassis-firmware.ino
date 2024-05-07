@@ -203,7 +203,7 @@ void moveDemo() {
         carBackward();
         break;
       case 5:
-        parkCar();
+        parkCar();   // This just falls over
         break;        
       default:
         break;
