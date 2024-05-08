@@ -175,17 +175,13 @@ void setup() {
 
 void printStatus() {
   if (printDelay.millisDelay(PRINT_DELAY_mS)) {
-    Serial.print("Gyro Angle: ");
-    Serial.print(kalmanfilter.angle);
-    Serial.print(", Distance: ");
-    Serial.print(distance_value);
-    Serial.println(" cm");
+    Serial.println(kalmanfilter.angle);
   }
 }
 
 int currentState = 0;
 void moveDemo() {
-  if (stateChangeDelay.secondsDelay(STATE__CHANGE_TIMER_S)) {
+  if (stateChangeDelay.secondsDelay(STATE__CHANGE_TIMER_S)){
     currentState++;
     if (currentState > 5) {
       currentState = 0;
@@ -207,8 +203,8 @@ void moveDemo() {
         carBackward();
         break;
       case 5:
-        parkCar();  // This just falls over
-        break;
+        parkCar();   // This just falls over
+        break;        
       default:
         break;
     }
@@ -226,8 +222,7 @@ void loop() {
   // functionMode();
   checkObstacle();
   rgb.blink(100);
- 
-printStatus();
+  printStatus();
   static unsigned long start_time;
   if (millis() - start_time < 10) {
     function_mode = IDLE;
