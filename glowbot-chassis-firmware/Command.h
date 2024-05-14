@@ -21,7 +21,8 @@ void keyValue()
   }
 }
 
-bool getKeyValue(){
+bool getKeyValue()
+{
   if (prev_key_mode != key_mode)
   {
     prev_key_mode = key_mode;
@@ -51,7 +52,8 @@ bool getKeyValue(){
   return false;
 }
 
-void keyInit(){
+void keyInit()
+{
   pinMode(KEY_MODE, INPUT_PULLUP);
   enableInterrupt(KEY_MODE, keyValue, FALLING);
 }
