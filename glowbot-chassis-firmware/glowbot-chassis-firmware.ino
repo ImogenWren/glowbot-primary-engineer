@@ -24,7 +24,7 @@ boolean carInitialize_en = true;
 #include <autoDelay.h>
 
 autoDelay printDelay;
-#define PRINT_DELAY_mS 100
+#define PRINT_DELAY_mS 500
 
 autoDelay stateChangeDelay;
 #define STATE__CHANGE_TIMER_S 2
@@ -236,7 +236,7 @@ void moveDemo() {
 
 
 
-#define OBSTACLE_LIMIT 50              //    Robot will enter obstacle avoidance mode if this limit is breached
+#define OBSTACLE_LIMIT 50               //    Robot will enter obstacle avoidance mode if this limit is breached
 #define OBSTACLE_AVOIDANCE_MODIFIER 80  // Robot will exit obstacle avoidance mode if path of LIMIT + MODIFIER is detected, otherwise will follow whole procedure
 #define NUMBER_ATTEMPTS 3
 
@@ -245,17 +245,21 @@ float leftDistance = 0;
 float rightDistance = 0;
 
 int avoidanceState = 0;
-autoDelay navDelay0;
-autoDelay navDelay1;
-autoDelay navDelay2;
-autoDelay navDelay3;
-autoDelay navDelay4;
+int lastAvoidanceState = 0;
+autoDelay navDelay;
+//autoDelay navDelay0;
+//autoDelay navDelay1;
+//autoDelay navDelay2;
+//autoDelay navDelay3;
+//autoDelay navDelay4;
 #define TURN_DELAY_mS 2000
-#define BACK_UP_DELAY_mS 1500
+#define BACK_UP_DELAY_mS 1000
 
 int avoidanceAttempts = 0;
 
 bool directionAlternator = true;  // this helps altenerate the first turn
+
+
 
 void navDemo() {
   if (!avoidanceMode) {  // No obstical detected - go forwards
@@ -270,9 +274,13 @@ void navDemo() {
     // Run obstacle avoidance routine
     switch (avoidanceState) {
       case 0:  // Back up from obstacal
+        if (lastAvoidanceState != avoidanceState) {
+          Serial.println("Case 0: Backing Up");
+          navDelay.resetDelayTime_mS();    // needed to make sure we can use multiple calls to navDelay, the delay time will be from when the reset method is called.
+        }
         carBackward();
-        if (navDelay0.millisDelay(BACK_UP_DELAY_mS)) {
-          Serial.println("Finished Backing Up");
+        if (navDelay.millisDelay(BACK_UP_DELAY_mS)) {
+          Serial.println("Case 0: Finished Backing Up");
           carStopNow();
           avoidanceAttempts++;
           if (directionAlternator) {
@@ -283,10 +291,14 @@ void navDemo() {
         }
         break;
       case 1:
+        if (lastAvoidanceState != avoidanceState) {
+          Serial.println("Case 1: Turning Left");
+          navDelay.resetDelayTime_mS(); 
+        }
         carTurnLeft();                                                        // turn left
         if (distance_value > OBSTACLE_LIMIT + OBSTACLE_AVOIDANCE_MODIFIER) {  // see if route is clear
           avoidanceState = 4;
-        } else if (navDelay1.millisDelay(TURN_DELAY_mS)) {  // else turn until timeout
+        } else if (navDelay.millisDelay(TURN_DELAY_mS)) {  // else turn until timeout
           carStopNow();
           if (directionAlternator) {
             avoidanceState = 2;  // If left is checked first then go to turn right
@@ -297,10 +309,14 @@ void navDemo() {
         leftDistance = distance_value;
         break;
       case 2:
+        if (lastAvoidanceState != avoidanceState) {
+          Serial.println("Case 2: Turning Right");
+          navDelay.resetDelayTime_mS(); 
+        }
         carTurnRight();                                                       // turn right
         if (distance_value > OBSTACLE_LIMIT + OBSTACLE_AVOIDANCE_MODIFIER) {  // see if route is clear
           avoidanceState = 4;
-        } else if (navDelay2.millisDelay(TURN_DELAY_mS * 2)) {  // else turn back past origional position to check other side
+        } else if (navDelay.millisDelay(TURN_DELAY_mS * 2)) {  // else turn back past origional position to check other side
           carStopNow();
           if (directionAlternator) {
             avoidanceState = 3;  // If left is checked first then go to comparason
@@ -312,9 +328,13 @@ void navDemo() {
         break;
 
       case 3:
+        if (lastAvoidanceState != avoidanceState) {
+          Serial.println("Case 3: Deciding direction");
+          navDelay.resetDelayTime_mS(); 
+        }
         if (leftDistance >= rightDistance && leftDistance > OBSTACLE_LIMIT + 5) {  // If left has greater distance and is greater than obsactle limit then
           carTurnLeft();
-          if (navDelay3.millisDelay(TURN_DELAY_mS * 2)) {  // Turn back to find the clear route
+          if (navDelay.millisDelay(TURN_DELAY_mS * 2)) {  // Turn back to find the clear route
             carStopNow();
             avoidanceState = 4;
           }
@@ -331,22 +351,26 @@ void navDemo() {
         }
         break;
       case 4:  // exist avoidance mode
-        Serial.println("Obstacle Avoided");
+        Serial.println("Case 4: Obstacle Avoided");
         avoidanceMode = false;
         avoidanceState = 0;
         directionAlternator = !directionAlternator;  // flip the bool so the check is performed in the opposite direction next time
         break;
       case 5:  // exist avoidance mode
-        Serial.println("Case 5 Backing Up Further");
+        if (lastAvoidanceState != avoidanceState) {
+          Serial.println("Case 5: Backing Up Further");
+          navDelay.resetDelayTime_mS(); 
+        }
         rgb.brightRedColor();
         carBackward();
-        if (navDelay4.millisDelay(BACK_UP_DELAY_mS * 3)) {
+        if (navDelay.millisDelay(BACK_UP_DELAY_mS * 3)) {
           avoidanceState = 0;
         }
         break;
       default:
         break;
     }
+    lastAvoidanceState = avoidanceState;
   }
 }
 
