@@ -158,6 +158,6 @@ void carInitialize(){
   mpu.initialize();
   enableInterrupt(ENCODER_LEFT_A_PIN | PINCHANGEINTERRUPT, encoderCountLeftA, CHANGE);
   enableInterrupt(ENCODER_RIGHT_A_PIN, encoderCountRightA, CHANGE);
-  MsTimer2::set(5, balanceCar);
+  MsTimer2::set(5, balanceCar);     // Sets balanceCar function as an interrupt routine
   MsTimer2::start();
 }

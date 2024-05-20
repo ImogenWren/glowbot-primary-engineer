@@ -20,11 +20,13 @@
 unsigned long start_prev_time = 0;
 boolean carInitialize_en = true;
 
+bool carParked = false;
+
 // Imogens Libraries
 #include <autoDelay.h>
 
 autoDelay printDelay;
-#define PRINT_DELAY_mS 500
+#define PRINT_DELAY_mS 1000
 
 autoDelay stateChangeDelay;
 #define STATE__CHANGE_TIMER_S 2
@@ -83,7 +85,7 @@ void setMotionState() {
       }
       break;
     default:
-      Serial.println("Error in State Machine");
+      Serial.println("Error in Motion State Machine");
       break;
   }
 }
@@ -172,66 +174,30 @@ void unparkCar() {
 
 
 
-void setup() {
-  Serial.begin(115200);
-  ultrasonicInit();
-  // keyInit(); bluetooth crap
-  rgb.initialize();
-  voltageInit();
-  start_prev_time = millis();
-  carInitialize();
-}
 
 
 void printStatus() {
   if (printDelay.millisDelay(PRINT_DELAY_mS)) {
-    Serial.print("Gyro Angle: ");
+    Serial.print(F("Motion Mode: "));
+    Serial.print(motionModeName[motion_mode]);
+    Serial.print(" Gyro Angle: ");
     Serial.print(kalmanfilter.angle);
     Serial.print(", Distance: ");
     Serial.print(distance_value);
-    Serial.println(" cm");
+    Serial.print(" cm");
+    Serial.print(", Volts: ");
+    Serial.print(voltage);
+    Serial.print(" V ");
+    if (low_voltage_flag) {
+      Serial.print("Low Voltage Detected!");
+    }
+    if (carParked){
+      Serial.print("Car Parked");
+    }
+    Serial.println("");
   }
 }
 
-int currentState = 0;
-void moveDemo() {
-  if (stateChangeDelay.secondsDelay(STATE__CHANGE_TIMER_S)) {
-    currentState++;
-    if (currentState > 7) {
-      currentState = 0;
-    }
-    switch (currentState) {
-      case 0:
-        // carStandby();
-
-        break;
-      case 1:
-        //  carTurnRight();
-        break;
-      case 2:
-        //  carForward();
-        break;
-      case 3:
-        //  carTurnLeft();
-        break;
-      case 4:
-        //   carBackward();
-        break;
-      case 5:
-        //  parkCar();  // This just falls over
-        unparkCar();
-        break;
-      case 6:
-        //  carStopNow();  //
-        break;
-      case 7:
-        parkCar();  //
-        break;
-      default:
-        break;
-    }
-  }
-}
 
 
 
@@ -247,11 +213,7 @@ float rightDistance = 0;
 int avoidanceState = 0;
 int lastAvoidanceState = 0;
 autoDelay navDelay;
-//autoDelay navDelay0;
-//autoDelay navDelay1;
-//autoDelay navDelay2;
-//autoDelay navDelay3;
-//autoDelay navDelay4;
+
 #define TURN_DELAY_mS 2000
 #define BACK_UP_DELAY_mS 1000
 
@@ -276,7 +238,7 @@ void navDemo() {
       case 0:  // Back up from obstacal
         if (lastAvoidanceState != avoidanceState) {
           Serial.println("Case 0: Backing Up");
-          navDelay.resetDelayTime_mS();    // needed to make sure we can use multiple calls to navDelay, the delay time will be from when the reset method is called.
+          navDelay.resetDelayTime_mS();  // needed to make sure we can use multiple calls to navDelay, the delay time will be from when the reset method is called.
         }
         carBackward();
         if (navDelay.millisDelay(BACK_UP_DELAY_mS)) {
@@ -293,7 +255,7 @@ void navDemo() {
       case 1:
         if (lastAvoidanceState != avoidanceState) {
           Serial.println("Case 1: Turning Left");
-          navDelay.resetDelayTime_mS(); 
+          navDelay.resetDelayTime_mS();
         }
         carTurnLeft();                                                        // turn left
         if (distance_value > OBSTACLE_LIMIT + OBSTACLE_AVOIDANCE_MODIFIER) {  // see if route is clear
@@ -311,7 +273,7 @@ void navDemo() {
       case 2:
         if (lastAvoidanceState != avoidanceState) {
           Serial.println("Case 2: Turning Right");
-          navDelay.resetDelayTime_mS(); 
+          navDelay.resetDelayTime_mS();
         }
         carTurnRight();                                                       // turn right
         if (distance_value > OBSTACLE_LIMIT + OBSTACLE_AVOIDANCE_MODIFIER) {  // see if route is clear
@@ -330,7 +292,7 @@ void navDemo() {
       case 3:
         if (lastAvoidanceState != avoidanceState) {
           Serial.println("Case 3: Deciding direction");
-          navDelay.resetDelayTime_mS(); 
+          navDelay.resetDelayTime_mS();
         }
         if (leftDistance >= rightDistance && leftDistance > OBSTACLE_LIMIT + 5) {  // If left has greater distance and is greater than obsactle limit then
           carTurnLeft();
@@ -359,7 +321,7 @@ void navDemo() {
       case 5:  // exist avoidance mode
         if (lastAvoidanceState != avoidanceState) {
           Serial.println("Case 5: Backing Up Further");
-          navDelay.resetDelayTime_mS(); 
+          navDelay.resetDelayTime_mS();
         }
         rgb.brightRedColor();
         carBackward();
@@ -376,28 +338,143 @@ void navDemo() {
 
 
 
-void loop() {
-  // moveDemo();  // runs through movement states as demo
-  navDemo();
-  // getKeyValue();  just used for bluetooth
-  //getBluetoothData();
-  //  keyEventHandle();  just IR remote stufff
-  getDistance();  // TODO: Check this is working
-  voltageMeasure();
+
+void setup() {
+  Serial.begin(115200);
+  ultrasonicInit();
+  rgb.initialize();
+  voltageInit();
+  start_prev_time = millis();
+  carInitialize();     // Sets balanceCar function as an interrupt routine
+  motion_mode = STOP;  // added to try and stop it launching itself
+}
+
+/*
+
+Defines switch case for state machine
+*/
+#define DEBUG_STATE_MACHINE true
+
+autoDelay stateDelay;  // delay to move between states using timer
+//stateDelay.resetDelayTime_mS(); function that may be useful for testing delaytime
+
+/**
+ * Defines the valid states for the state machine
+ * 
+ */
+typedef enum {
+  STATE_INIT,
+  STATE_WAIT,
+  STATE_UNPARK,
+  STATE_PARK,
+  STATE_FORWARD,
+  STATE_BACKWARD,
+  STATE_TURNLEFT,
+  STATE_TURNRIGHT,
+  STATE_ESTOP
+} StateType;
+
+
+char stateNames[][20] = {
+  "STATE_INIT",
+  "STATE_WAIT",
+  "STATE_UNPARK",
+  "STATE_PARK",
+  "STATE_FORWARD",
+  "STATE_BACKWARD",
+  "STATE_TURNLEFT",
+  "STATE_TURNRIGHT",
+  "STATE_ESTOP"
+};
+
+/**
+ * Stores the current, and previous state of the state machine
+ */
+
+StateType smState = STATE_INIT;  // define the initial state
+StateType lastState;
+
+
+
+void sm_state_acc(float acc) {
+  if (lastState != smState) {  // Do anything here that needs to happen only once the state is entered for the first time
+#if DEBUG_STATES == true
+    Serial.print(F("State Machine: Accelleration set to: ["));
+    Serial.print(acc);
+    Serial.println("]");
+
+#endif
+    lastState = smState;
+  }
+  // Provide clause to exit state
+  // or provide following state to goto direct
+  smState = STATE_WAIT;
+}
+
+
+
+void checkParked() {
+  if (kalmanfilter.angle >= 28 || kalmanfilter.angle <= -27) {
+    carParked = true;
+  } else {
+    carParked = false;
+  }
+}
+
+void sm_run(void) {
+  // Do all Functions that happen in every state:
+  getDistance();
   setMotionState();
-  // functionMode();
-  checkObstacle();
-  rgb.blink(100);
-
   printStatus();
-  static unsigned long start_time;
-  if (millis() - start_time < 10) {
-    function_mode = IDLE;
-    motion_mode = STOP;
-    carStop();
+  voltageMeasure();
+  checkParked();
+
+  // Place any Movement disabling code here
+  if (low_voltage_flag || carParked){
+  //  carStopNow();                        // actually just want to disable motor output but still run state machine as is?
+    digitalWrite(STBY_PIN, HIGH);
   }
 
-  if (millis() - start_time == 2000) {  // Enter the pendulum, the car balances...
-    unparkCar();
+  // For debugging state machine
+#if DEBUG_STATE_MACHINE == true
+  if (lastState != smState) {
+    Serial.print("{\"State\":\"");
+    Serial.print(stateNames[smState]);
+    Serial.println("\"}");
   }
+#endif
+
+  // Run State Machine
+  switch (smState) {
+    case 0:
+      break;
+    default:
+      //     Serial.print(F("Exception in State Machine, Unknown State: ["));
+      //    Serial.print(smState);
+      //    Serial.println("]");
+      break;
+  }
+}
+
+
+void loop() {
+  // navDemo();
+
+  // rgb.blink(100);
+
+  sm_run();
+
+
+  static unsigned long start_time;
+
+
+  // if (millis() - start_time < 10) {  // Weird way of ensuring that the car stays in IDLE mode while starting up?
+  //   function_mode = IDLE;
+  //   motion_mode = STOP;
+  //  carStop();
+  // }
+
+  // if (millis() - start_time == 2000) {  // Enter the pendulum, the car balances...
+  //    unparkCar();
+  //  }
 }

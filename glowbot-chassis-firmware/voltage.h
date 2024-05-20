@@ -6,11 +6,12 @@ void voltageInit() {
   analogReference(INTERNAL);
 }
 
+double voltage;
 
 void voltageMeasure() {
   if (millis() - vol_measure_time > 1000) {
     vol_measure_time = millis();
-    double voltage = (analogRead(VOL_MEASURE_PIN) * 1.1 / 1024) * ((10 + 1.5) / 1.5);
+    voltage = (analogRead(VOL_MEASURE_PIN) * 1.1 / 1024) * ((10 + 1.5) / 1.5);
     if (voltage > 7.8) {
       if (low_voltage_flag == 1) {
         rgb.lightOff();

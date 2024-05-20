@@ -18,3 +18,13 @@ enum MOTION_MODE
   STOP,
   START,
 } motion_mode = START;
+
+char motionModeName[][10]{
+  "STANDBY",
+  "FORWARD",
+  "BACKWARD",
+  "TURNLEFT",
+  "TURNRIGHT",
+  "STOP",
+  "START",
+};
