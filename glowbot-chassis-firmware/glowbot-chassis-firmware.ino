@@ -16,193 +16,24 @@
 #include "voltage.h"
 #include "EnableInterrupt.h"
 
-
-unsigned long start_prev_time = 0;
-boolean carInitialize_en = true;
-
-bool carParked = false;
-
 // Imogens Libraries
 #include <autoDelay.h>
 
 autoDelay printDelay;
-#define PRINT_DELAY_mS 1000
+#define PRINT_DELAY_mS 1000  // Delay between debugging prints to serial monitor
 
-autoDelay stateChangeDelay;
-#define STATE__CHANGE_TIMER_S 2
-
-
-void modes() {  // this is not a working function, just a way to group things found in the origional code
-  obstacleAvoidanceMode();
-  followMode();
-  followMode2();
-}
-
-
-void setMotionState() {
-  switch (motion_mode) {
-    case FORWARD:
-      setting_car_speed = 40;
-      setting_turn_speed = 0;
-      break;
-    case BACKWARD:
-      setting_car_speed = -40;
-      setting_turn_speed = 0;
-      break;
-    case TURNLEFT:
-      setting_car_speed = 0;
-      setting_turn_speed = 50;
-      break;
-    case TURNRIGHT:
-      setting_car_speed = 0;
-      setting_turn_speed = -50;
-      break;
-    case STANDBY:
-      setting_car_speed = 0;
-      setting_turn_speed = 0;
-      break;
-    case STOP:
-      if (millis() - start_prev_time > 1000) {
-        function_mode = IDLE;
-        if (balance_angle_min <= kalmanfilter_angle && kalmanfilter_angle <= balance_angle_max) {
-          motion_mode = STANDBY;
-          rgb.lightOff();
-        }
-      }
-      break;
-    case START:
-      if (millis() - start_prev_time > 2000) {
-        if (balance_angle_min <= kalmanfilter_angle && kalmanfilter_angle <= balance_angle_max) {
-          car_speed_integeral = 0;
-          setting_car_speed = 0;
-          motion_mode = STANDBY;
-          rgb.lightOff();
-        } else {
-          motion_mode = STOP;
-          carStop();
-          rgb.brightRedColor();
-        }
-      }
-      break;
-    default:
-      Serial.println("Error in Motion State Machine");
-      break;
-  }
-}
-
-
-// Are these for changing mode?
-
-void carStandby() {
-  rgb.lightOff();
-  motion_mode = STANDBY;
-}
-
-
-void carForward() {
-  rgb.flashBlueColorFront();
-  motion_mode = FORWARD;
-}
-
-void carBackward() {
-  rgb.flashBlueColorback();
-  motion_mode = BACKWARD;
-}
-
-
-
-void carTurnLeft() {
-  rgb.flashBlueColorLeft();
-  motion_mode = TURNLEFT;
-}
-
-
-void carTurnRight() {
-  rgb.flashBlueColorRight();
-  motion_mode = TURNRIGHT;
-}
-
-void carStopNow() {
-  rgb.flashYellowColorFront();
-  rgb.flashYellowColorback();
-  motion_mode = STOP;
-}
-
-
-
-
-
-void lightShow() {
-  rgb.flag++;
-  if (rgb.flag > 6) {
-    rgb.flag = 1;
-  }
-  rgb.brightness = 0;
-  rgb.setBrightness(rgb.brightness);
-  rgb.show();
-  // Switch case for rgb.flag?
-  // rgb.theaterChaseRainbow(50);
-  // rgb.rainbowCycle(20);
-  // rgb.theaterChase(127, 127, 127, 50);
-  // rgb.rainbow(20);
-  // rgb.whiteOverRainbow(20, 30, 4);
-  // rgb.rainbowFade2White(3, 50, 50);
-}
-
-
-void parkCar() {
-  function_mode = IDLE;
-  motion_mode = STOP;
-  // carForward(210);
-  //  delay((kalmanfilter_angle - 30) * (kalmanfilter_angle - 30) / 8);
-  carStop();  // This causes it to fall over frontways
-  start_prev_time = millis();
-  rgb.brightRedColor();
-}
-
-
-
-void unparkCar() {
-  setting_car_speed = 40;  // bug fix to try and stop it toppeling over on start
-  if (millis() - start_prev_time > 500 && kalmanfilter_angle >= balance_angle_min) {
-    start_prev_time = millis();
-    motion_mode = START;
-  }
-  motion_mode = START;
-}
+#include "globals.h"
 
 
 
 
 
 
-void printStatus() {
-  if (printDelay.millisDelay(PRINT_DELAY_mS)) {
-    Serial.print(F("Motion Mode: "));
-    Serial.print(motionModeName[motion_mode]);
-    Serial.print(" Gyro Angle: ");
-    Serial.print(kalmanfilter.angle);
-    Serial.print(", Distance: ");
-    Serial.print(distance_value);
-    Serial.print(" cm");
-    Serial.print(", Volts: ");
-    Serial.print(voltage);
-    Serial.print(" V ");
-    if (low_voltage_flag) {
-      Serial.print("Low Voltage Detected!");
-    }
-    if (carParked){
-      Serial.print("Car Parked");
-    }
-    Serial.println("");
-  }
-}
 
 
 
-
-
-#define OBSTACLE_LIMIT 50               //    Robot will enter obstacle avoidance mode if this limit is breached
+// Navigation Algorithm Variables/Constants
+#define OBSTACLE_LIMIT_CM 50            //    Robot will enter obstacle avoidance mode if this limit is breached
 #define OBSTACLE_AVOIDANCE_MODIFIER 80  // Robot will exit obstacle avoidance mode if path of LIMIT + MODIFIER is detected, otherwise will follow whole procedure
 #define NUMBER_ATTEMPTS 3
 
@@ -226,12 +57,12 @@ bool directionAlternator = true;  // this helps altenerate the first turn
 void navDemo() {
   if (!avoidanceMode) {  // No obstical detected - go forwards
     carForward();
-    if (distance_value <= OBSTACLE_LIMIT) {  // If obstacle is encountered
-      carStopNow();
-      Serial.println("Obstacle Detected! ");
-      avoidanceMode = true;
-      avoidanceState = 0;
-    }
+
+    carStopNow();
+    Serial.println("Obstacle Detected! ");
+    avoidanceMode = true;
+    avoidanceState = 0;
+
   } else {
     // Run obstacle avoidance routine
     switch (avoidanceState) {
@@ -257,8 +88,8 @@ void navDemo() {
           Serial.println("Case 1: Turning Left");
           navDelay.resetDelayTime_mS();
         }
-        carTurnLeft();                                                        // turn left
-        if (distance_value > OBSTACLE_LIMIT + OBSTACLE_AVOIDANCE_MODIFIER) {  // see if route is clear
+        carTurnLeft();                                                           // turn left
+        if (distance_value > OBSTACLE_LIMIT_CM + OBSTACLE_AVOIDANCE_MODIFIER) {  // see if route is clear
           avoidanceState = 4;
         } else if (navDelay.millisDelay(TURN_DELAY_mS)) {  // else turn until timeout
           carStopNow();
@@ -275,8 +106,8 @@ void navDemo() {
           Serial.println("Case 2: Turning Right");
           navDelay.resetDelayTime_mS();
         }
-        carTurnRight();                                                       // turn right
-        if (distance_value > OBSTACLE_LIMIT + OBSTACLE_AVOIDANCE_MODIFIER) {  // see if route is clear
+        carTurnRight();                                                          // turn right
+        if (distance_value > OBSTACLE_LIMIT_CM + OBSTACLE_AVOIDANCE_MODIFIER) {  // see if route is clear
           avoidanceState = 4;
         } else if (navDelay.millisDelay(TURN_DELAY_mS * 2)) {  // else turn back past origional position to check other side
           carStopNow();
@@ -294,13 +125,13 @@ void navDemo() {
           Serial.println("Case 3: Deciding direction");
           navDelay.resetDelayTime_mS();
         }
-        if (leftDistance >= rightDistance && leftDistance > OBSTACLE_LIMIT + 5) {  // If left has greater distance and is greater than obsactle limit then
+        if (leftDistance >= rightDistance && leftDistance > OBSTACLE_LIMIT_CM + 5) {  // If left has greater distance and is greater than obsactle limit then
           carTurnLeft();
           if (navDelay.millisDelay(TURN_DELAY_mS * 2)) {  // Turn back to find the clear route
             carStopNow();
             avoidanceState = 4;
           }
-        } else if (rightDistance > leftDistance && rightDistance > OBSTACLE_LIMIT + 5) {  // else if right has greater distance then just exit avoidance mode
+        } else if (rightDistance > leftDistance && rightDistance > OBSTACLE_LIMIT_CM + 5) {  // else if right has greater distance then just exit avoidance mode
           carStopNow();
           avoidanceState = 4;
         } else {
@@ -354,72 +185,117 @@ void setup() {
 Defines switch case for state machine
 */
 #define DEBUG_STATE_MACHINE true
+#define UNPARK_WAIT_mS 3000  // number of mS to wait on startup until car unparks
 
 autoDelay stateDelay;  // delay to move between states using timer
 //stateDelay.resetDelayTime_mS(); function that may be useful for testing delaytime
 
-/**
- * Defines the valid states for the state machine
- * 
- */
-typedef enum {
-  STATE_INIT,
-  STATE_WAIT,
-  STATE_UNPARK,
-  STATE_PARK,
-  STATE_FORWARD,
-  STATE_BACKWARD,
-  STATE_TURNLEFT,
-  STATE_TURNRIGHT,
-  STATE_ESTOP
-} StateType;
 
 
-char stateNames[][20] = {
-  "STATE_INIT",
-  "STATE_WAIT",
-  "STATE_UNPARK",
-  "STATE_PARK",
-  "STATE_FORWARD",
-  "STATE_BACKWARD",
-  "STATE_TURNLEFT",
-  "STATE_TURNRIGHT",
-  "STATE_ESTOP"
-};
-
-/**
- * Stores the current, and previous state of the state machine
- */
-
-StateType smState = STATE_INIT;  // define the initial state
-StateType lastState;
-
-
-
-void sm_state_acc(float acc) {
+// INITIAL STATE
+void sm_state_init() {
   if (lastState != smState) {  // Do anything here that needs to happen only once the state is entered for the first time
 #if DEBUG_STATES == true
-    Serial.print(F("State Machine: Accelleration set to: ["));
-    Serial.print(acc);
-    Serial.println("]");
-
+    Serial.println(F("State Machine: Init"));
 #endif
+    stateDelay.resetDelayTime_mS();
     lastState = smState;
   }
-  // Provide clause to exit state
-  // or provide following state to goto direct
-  smState = STATE_WAIT;
-}
-
-
-
-void checkParked() {
-  if (kalmanfilter.angle >= 28 || kalmanfilter.angle <= -27) {
-    carParked = true;
-  } else {
-    carParked = false;
+  if (carParked && !low_voltage_flag) {            // If car is parked and does not have low voltage detected
+    if (stateDelay.millisDelay(UNPARK_WAIT_mS)) {  // Dleay for UNPARK_WAIT_mS milliseconds
+      smState = STATE_UNPARK;
+    }                                                       // Go to unpark state
+  } else if (stateDelay.millisDelay(UNPARK_WAIT_mS * 2)) {  // else if timer runs out then go to wait state
+    smState = STATE_WAIT;
   }
 }
+
+// Wait STATE
+void sm_state_wait() {
+  if (lastState != smState) {  // Do anything here that needs to happen only once the state is entered for the first time
+#if DEBUG_STATES == true
+    Serial.println(F("State Machine: Wait"));
+#endif
+    carStandby();
+    //stateDelay.resetDelayTime_mS();
+    lastState = smState;
+  }
+  // Function here to wait for button press, else is a dead end
+  // Also standing the car up should trigger a move from this state to another state
+  if (!carParked) {
+    smState = STATE_FOLLOWLINE;
+  }
+}
+
+// Unpark STATE
+void sm_state_unpark() {
+  if (lastState != smState) {  // Do anything here that needs to happen only once the state is entered for the first time
+#if DEBUG_STATES == true
+    Serial.println(F("State Machine: Unpark"));
+#endif
+    stateDelay.resetDelayTime_mS();
+
+    lastState = smState;
+  }
+  unparkCar();
+  if (!carParked) {
+    smState = STATE_WAIT;
+  }
+}
+
+// park STATE
+void sm_state_park() {
+  if (lastState != smState) {  // Do anything here that needs to happen only once the state is entered for the first time
+#if DEBUG_STATES == true
+    Serial.println(F("State Machine: Unpark"));
+#endif
+    stateDelay.resetDelayTime_mS();
+    parkCar();
+    lastState = smState;
+  }
+  if (carParked) {
+    smState = STATE_WAIT;
+  }
+}
+
+
+void sm_state_followline(int rightSense, int midSense, int leftSense, int direction) {
+  if (lastState != smState) {  // Do anything here that needs to happen only once the state is entered for the first time
+#if DEBUG_STATES == true
+    Serial.println(F("State Machine: followline"));
+#endif
+    lastState = smState;
+    
+  }
+  carForward();
+  if (distance_value <= OBSTACLE_LIMIT_CM) {  // If obstacle is encountered
+    // Provide clause to exit state
+    // or provide following state to goto direct
+    smState = STATE_PATHBLOCKED;
+    nextState = STATE_FOLLOWLINE;  // tells statemachine where to go back to
+  }
+}
+
+#define OBSTACLE_TIMEOUT_S 10
+
+void sm_state_pathblocked() {
+  if (lastState != smState) {  // Do anything here that needs to happen only once the state is entered for the first time
+#if DEBUG_STATES == true
+    Serial.println(F("State Machine: followline"));
+#endif
+    lastState = smState;
+    carStandby();  // stops movement but keeps upright
+    stateDelay.resetDelayTime_mS();
+  }
+  if (distance_value > OBSTACLE_LIMIT_CM + 5) {  // If obstacle is removed
+    smState = nextState;                         // go to the state passed from the last one
+  }
+  if (stateDelay.secondsDelay(OBSTACLE_TIMEOUT_S)) {
+    smState = STATE_PARK;
+  }
+}
+
+
 
 void sm_run(void) {
   // Do all Functions that happen in every state:
@@ -430,9 +306,9 @@ void sm_run(void) {
   checkParked();
 
   // Place any Movement disabling code here
-  if (low_voltage_flag || carParked){
-  //  carStopNow();                        // actually just want to disable motor output but still run state machine as is?
-    digitalWrite(STBY_PIN, HIGH);
+  if (low_voltage_flag || carParked) {
+    //  carStopNow();                        // actually just want to disable motor output but still run state machine as is?
+    digitalWrite(STBY_PIN, HIGH);  // otherwise could send to a stopped state
   }
 
   // For debugging state machine
@@ -446,12 +322,25 @@ void sm_run(void) {
 
   // Run State Machine
   switch (smState) {
-    case 0:
+    case STATE_INIT:
+      sm_state_init();
+      break;
+    case STATE_WAIT:
+      sm_state_wait();
+      break;
+    case STATE_UNPARK:
+      sm_state_unpark();
+      break;
+    case STATE_FOLLOWLINE:
+      sm_state_followline(0, 0, 0, 0);
+      break;
+    case STATE_PATHBLOCKED:
+      sm_state_pathblocked();
       break;
     default:
-      //     Serial.print(F("Exception in State Machine, Unknown State: ["));
-      //    Serial.print(smState);
-      //    Serial.println("]");
+      Serial.print(F("Exception in State Machine, Unknown State: ["));
+      Serial.print(smState);
+      Serial.println("]");
       break;
   }
 }

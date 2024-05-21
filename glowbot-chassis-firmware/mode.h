@@ -1,3 +1,8 @@
+
+
+
+
+
 enum FUNCTION_MODE
 {
   IDLE,
@@ -28,3 +33,11 @@ char motionModeName[][10]{
   "STOP",
   "START",
 };
+
+
+void modes() {  // this is not a working function, just a way to group things found in the origional code
+ // obstacleAvoidanceMode();
+  //followMode();
+ // followMode2();
+}
+
