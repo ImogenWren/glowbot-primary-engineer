@@ -341,6 +341,7 @@ void sm_run(void) {
       Serial.print(F("Exception in State Machine, Unknown State: ["));
       Serial.print(smState);
       Serial.println("]");
+       smState = STATE_INIT;
       break;
   }
 }
