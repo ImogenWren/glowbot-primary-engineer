@@ -85,9 +85,10 @@ esp_now_peer_info_t moduleRx;
 #define PRINT_TX_STATS false
 #define PRINT_TX_STATUS false
 #define PRINT_REMOTE_STATUS false
-#define PRINT_UART_RX false
+#define PRINT_UART_RX true
 #define PRINT_ESPNOW_TX false
-#define PRINT_UART_DATA_SENT true
+#define PRINT_UART_DATA_SENT false
+#define PRINT_LINE_SENSOR_DATA false
 
 // ESPnow options
 #define CHANNEL 1
@@ -152,54 +153,28 @@ https://forum.arduino.cc/t/simple-code-to-send-a-struct-between-arduinos-using-s
 
 #include "globals.h"
 #include "uartFunctions_Rx.h"
-//#include "uartFunctions_Tx.h"
+#include "uartFunctions_Tx.h"
 #include "esp-wireless.h"
 #include "ESPnowFunctions.h"
+#include "lineFollower.h"
 
 
 
-
-
-
-
-
-void sendUARTdata() {
-  if (uartTXdata_available) {
-    mySerial.write(startMarker);
-    mySerial.write((byte*)&uartData, uartDataLen);
-#if PRINT_UART_DATA_SENT == true
-    Serial.print("Sent: ");
-    Serial.print(uartData.msg);
-    Serial.print(' ');
-    Serial.print(uartData.val_0);
-    Serial.print(' ');
-    Serial.print(uartData.val_1);
-    Serial.print(' ');
-    Serial.print(uartData.val_2);
-    Serial.print(' ');
-    Serial.print(uartData.val_3);
-    Serial.println("");
-#endif
-    uartTXdata_available = false;
-  }
-}
 
 
 
 autoDelay sampleDelay;
-#define SENSOR_SAMPLERATE_mS 1000
+#define SENSOR_SAMPLERATE_mS 500
 // Gather and sort all local sensors into data structure to send via UART to local periferal device
 void gatherSensors() {
   if (sampleDelay.millisDelay(SENSOR_SAMPLERATE_mS)) {
-    uartData.val_0 = 1;
-    uartData.val_1 = 2;
-    uartData.val_2 = 3;
-    uartData.val_3 = 4;
+    uartData.val_0 = leftLineSense;
+    uartData.val_1 = centerLineSense;
+    uartData.val_2 = rightLineSense;
+    uartData.val_3 = directionLineSense;
     uartTXdata_available = true;
   }
 }
-
-
 
 
 
@@ -230,8 +205,10 @@ void setup() {
 
 
 void loop() {
-  gatherSensors();  // gather data from local sensors
-  sendUARTdata();   // send sensor data over UART if new data is available
-  // Serial data is gathered via callback
+ // lineFollowerSensorRead();   // samples line sensors
+ // gatherSensors();  // gather data from local sensors
+ // sendUARTdata();   // send sensor data over UART if new data is available
+  // Serial data is gathered via callback... is it?
+ //serialEvent();
   handleESPnow();  // handles all ESPnow data transmission, if serial data is available to send
 }
