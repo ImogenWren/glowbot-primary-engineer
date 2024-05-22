@@ -87,6 +87,7 @@ esp_now_peer_info_t moduleRx;
 #define PRINT_REMOTE_STATUS false
 #define PRINT_UART_RX false
 #define PRINT_ESPNOW_TX false
+#define PRINT_UART_DATA_SENT true
 
 // ESPnow options
 #define CHANNEL 1
@@ -94,9 +95,9 @@ esp_now_peer_info_t moduleRx;
 
 #include <HardwareSerial.h>
 
-HardwareSerial mySerial(0);  // define a Serial for UART1
-const int MySerialRX = 3;
-const int MySerialTX = 1;
+HardwareSerial mySerial(1);  // define a Serial for UART1
+const int MySerialRX = 16;
+const int MySerialTX = 17;
 
 #define STRUCT_MSG_SIZE 150
 #define UART_MSG_SIZE 150
@@ -115,11 +116,26 @@ typedef struct struct_message {
   bool flag;
 } struct_message;
 
-
 // Create a struct_message called txData
 struct_message txData;
-struct_message uartData;
 
+
+// data to be sent -> Limited to 32 bytes!
+struct uartStruct {
+  char msg[16];      // 16 bytes
+  uint8_t val_0;     //  1
+  uint8_t val_1;     //  1
+  uint8_t val_2;     //  1
+  uint8_t val_3;     //  1
+  byte padding[10];  // 10
+                     //------
+                     // 20
+};
+
+uartStruct uartData = { "xxx", 0, 0, 0, 0, 0 };  // dummy load of data
+
+const byte startMarker = 255;
+const byte uartDataLen = sizeof(uartData);
 
 char inputString[STRUCT_MSG_SIZE];  // specify max length of 32 chars? bytes?
 char overflowBuffer[STRUCT_MSG_SIZE];
@@ -135,7 +151,8 @@ https://forum.arduino.cc/t/simple-code-to-send-a-struct-between-arduinos-using-s
 
 
 #include "globals.h"
-#include "uartFunctions.h"
+#include "uartFunctions_Rx.h"
+//#include "uartFunctions_Tx.h"
 #include "esp-wireless.h"
 #include "ESPnowFunctions.h"
 
@@ -148,7 +165,21 @@ https://forum.arduino.cc/t/simple-code-to-send-a-struct-between-arduinos-using-s
 
 void sendUARTdata() {
   if (uartTXdata_available) {
-    //mySerial.println(char(uartData));
+    mySerial.write(startMarker);
+    mySerial.write((byte*)&uartData, uartDataLen);
+#if PRINT_UART_DATA_SENT == true
+    Serial.print("Sent: ");
+    Serial.print(uartData.msg);
+    Serial.print(' ');
+    Serial.print(uartData.val_0);
+    Serial.print(' ');
+    Serial.print(uartData.val_1);
+    Serial.print(' ');
+    Serial.print(uartData.val_2);
+    Serial.print(' ');
+    Serial.print(uartData.val_3);
+    Serial.println("");
+#endif
     uartTXdata_available = false;
   }
 }
@@ -160,10 +191,10 @@ autoDelay sampleDelay;
 // Gather and sort all local sensors into data structure to send via UART to local periferal device
 void gatherSensors() {
   if (sampleDelay.millisDelay(SENSOR_SAMPLERATE_mS)) {
-    uartData.num_0 = 1;
-    uartData.num_1 = 2;
-    uartData.num_2 = 3;
-    uartData.num_3 = 4;
+    uartData.val_0 = 1;
+    uartData.val_1 = 2;
+    uartData.val_2 = 3;
+    uartData.val_3 = 4;
     uartTXdata_available = true;
   }
 }
@@ -181,7 +212,7 @@ void setup() {
   //Set device in STA mode to begin with
   WiFi.mode(WIFI_STA);
   esp_wifi_set_channel(CHANNEL, WIFI_SECOND_CHAN_NONE);
-  Serial.println("ESPNow/Basic/moduleTx Example");
+  Serial.println("Glowbot: ESP32: UART Bridge & Sensor Expansion Package");
   // This is the mac address of the moduleTx in Station Mode
   Serial.print("STA MAC: ");
   Serial.println(WiFi.macAddress());

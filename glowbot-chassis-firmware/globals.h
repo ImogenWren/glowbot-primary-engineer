@@ -52,32 +52,49 @@ bool carParked = false;
 unsigned long start_prev_time = 0;
 boolean carInitialize_en = true;
 
+uint8_t leftLine = 0;
+uint8_t centerLine = 0;
+uint8_t rightLine = 0;
+uint8_t lineDirection = 0;
+
 
 // Global Functions (Not the best place for them but gets them out the way)
 
 
 void printStatus() {
+#if PRINT_STATUS_UPDATE == true
   if (printDelay.millisDelay(PRINT_DELAY_mS)) {
-    Serial.print(F("Operation State: "));
+    Serial.print(F("Op State: "));
     Serial.print(stateNames[smState]);
-    Serial.print(F(", Motion Mode: "));
+    Serial.print(F(", Motion: "));
     Serial.print(motionModeName[motion_mode]);
-    Serial.print(" Gyro Angle: ");
+    Serial.print(F(" Gyro: "));
     Serial.print(kalmanfilter.angle);
-    Serial.print(", Distance: ");
+    Serial.print(F(", Ping: "));
     Serial.print(distance_value);
-    Serial.print(" cm");
-    Serial.print(", Volts: ");
+    Serial.print(F(" cm"));
+    Serial.print(F(", Batt: "));
     Serial.print(voltage);
-    Serial.print(" V ");
+    Serial.print(F(" V "));
+    Serial.print(F("Line: "));
+    Serial.print(leftLine);
+    Serial.print(F(", "));
+    Serial.print(centerLine);
+    Serial.print(F(", "));
+    Serial.print(rightLine);
+    Serial.print(F(", "));
+    Serial.print(lineDirection);
+    Serial.print(F(", "));
+
     if (low_voltage_flag) {
-      Serial.print("Low Voltage Detected!");
+      Serial.print(F("Low Voltage Detected!"));
     }
     if (carParked) {
-      Serial.print("Car Parked");
+      Serial.print(F("Car Parked"));
     }
     Serial.println("");
   }
+#endif
 }
 
 // Are these for changing mode?
@@ -186,7 +203,7 @@ void setMotionState() {
       }
       break;
     default:
-      Serial.println("Error in Motion State Machine");
+      Serial.println(F("Error in Motion State Machine"));
       break;
   }
 }
@@ -194,12 +211,12 @@ void setMotionState() {
 
 
 void checkParked() {
-    if (kalmanfilter.angle >= 28 || kalmanfilter.angle <= -27) {
-      carParked = true;
-    } else {
-      carParked = false;
-    } 
+  if (kalmanfilter.angle >= 28 || kalmanfilter.angle <= -27) {
+    carParked = true;
+  } else {
+    carParked = false;
   }
+}
 
 
 
