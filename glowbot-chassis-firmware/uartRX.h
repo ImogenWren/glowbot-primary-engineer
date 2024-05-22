@@ -8,9 +8,12 @@ struct RxStruct {
   uint8_t val_1;     //  1
   uint8_t val_2;     //  1
   uint8_t val_3;     //  1
-  byte padding[10];  // 10
+  bool leftSwitch;   //  1
+  bool rightSwitch;  //  1
+  bool button;       //  1
+  byte padding[9];   //  9
                      //------
-                     // 20
+                     // 32
 };
 
 
@@ -53,8 +56,12 @@ void parseUARTdata() {
     centerLine = rxData.val_1;
     rightLine = rxData.val_2;
     lineDirection = rxData.val_3;
+    leftSwitch = rxData.leftSwitch;
+    rightSwitch = rxData.rightSwitch;
+    button = rxData.button;
+
 #if PRINT_UART_RX == true
-    Serial.print("This just in:    ");
+    Serial.print(F("UART-Rx: "));
     Serial.print(rxData.msg);
     Serial.print(' ');
     Serial.print(rxData.val_0);
@@ -64,7 +71,16 @@ void parseUARTdata() {
     Serial.print(rxData.val_2);
     Serial.print(' ');
     Serial.print(rxData.val_3);
+    Serial.print(' ');
+    Serial.print(rxData.leftSwitch);
+    Serial.print(' ');
+    Serial.print(rxData.rightSwitch);
+    Serial.print(' ');
+    Serial.print(rxData.button);
+
     Serial.println("");
+
+
 #endif
     newData = false;
   }

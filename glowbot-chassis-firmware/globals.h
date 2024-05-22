@@ -57,6 +57,11 @@ uint8_t centerLine = 0;
 uint8_t rightLine = 0;
 uint8_t lineDirection = 0;
 
+bool leftSwitch;
+bool rightSwitch;
+bool button;
+
+//char comma[3] = ", "
 
 // Global Functions (Not the best place for them but gets them out the way)
 
@@ -64,9 +69,9 @@ uint8_t lineDirection = 0;
 void printStatus() {
 #if PRINT_STATUS_UPDATE == true
   if (printDelay.millisDelay(PRINT_DELAY_mS)) {
-    Serial.print(F("Op State: "));
+    Serial.print(F("State: "));
     Serial.print(stateNames[smState]);
-    Serial.print(F(", Motion: "));
+    Serial.print(F(", Move: "));
     Serial.print(motionModeName[motion_mode]);
 //    Serial.print(F(" Gyro: "));
 //    Serial.print(kalmanfilter.angle);
@@ -76,7 +81,7 @@ void printStatus() {
   //  Serial.print(F(", Batt: "));
  //   Serial.print(voltage);
 //    Serial.print(F(" V "));
-    Serial.print(F("Line: "));
+    Serial.print(F(" Line: "));
     Serial.print(leftLine);
     Serial.print(F(", "));
     Serial.print(centerLine);
@@ -85,6 +90,15 @@ void printStatus() {
     Serial.print(F(", "));
     Serial.print(lineDirection);
     Serial.print(F(", "));
+    Serial.print(F("Switch: "));
+    Serial.print(leftSwitch);
+    Serial.print(F(", "));
+    Serial.print(rightSwitch);
+    Serial.print(F(", "));
+    Serial.print(button);
+    Serial.print(F(", "));
+
+
 
     if (low_voltage_flag) {
       Serial.print(F("Low Voltage Detected!"));

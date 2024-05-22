@@ -7,8 +7,8 @@
 
 void sendUARTdata() {
   if (uartTXdata_available) {
-    mySerial.write(startMarker);
-    mySerial.write((byte*)&uartData, uartDataLen);
+    Serial2.write(startMarker);
+    Serial2.write((byte*)&uartData, uartDataLen);
 #if PRINT_UART_DATA_SENT == true
     Serial.print("Sent: ");
     Serial.print(uartData.msg);

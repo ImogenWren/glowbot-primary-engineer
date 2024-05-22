@@ -96,7 +96,7 @@ esp_now_peer_info_t moduleRx;
 
 #include <HardwareSerial.h>
 
-HardwareSerial mySerial(1);  // define a Serial for UART1
+//HardwareSerial mySerial(1);  // define a Serial for UART1
 const int MySerialRX = 16;
 const int MySerialTX = 17;
 
@@ -128,14 +128,17 @@ struct uartStruct {
   uint8_t val_1;     //  1
   uint8_t val_2;     //  1
   uint8_t val_3;     //  1
-  byte padding[10];  // 10
+  bool leftSwitch;   //  1
+  bool rightSwitch;  //  1
+  bool button;       //  1
+  byte padding[9];  //  9
                      //------
-                     // 20
+                     // 32
 };
 
-uartStruct uartData = { "xxx", 0, 0, 0, 0, 0 };  // dummy load of data
+uartStruct uartData = { "xxx", 0, 0, 0, 0, 0,0 ,0 ,0 };  // dummy load of data
 
-const byte startMarker = 255;
+const byte startMarker = 255;    // used to note start of packet for UART struct parsing
 const byte uartDataLen = sizeof(uartData);
 
 char inputString[STRUCT_MSG_SIZE];  // specify max length of 32 chars? bytes?
@@ -199,16 +202,16 @@ void setup() {
   // get the status of Trasnmitted packet
   esp_now_register_send_cb(OnDataSent);
   // Setup serial port to listen for incoming data
-  mySerial.begin(115200, SERIAL_8N1, MySerialRX, MySerialTX);
+  Serial2.begin(115200, SERIAL_8N1, MySerialRX, MySerialTX);
 }
 
 
 
 void loop() {
- // lineFollowerSensorRead();   // samples line sensors
- // gatherSensors();  // gather data from local sensors
- // sendUARTdata();   // send sensor data over UART if new data is available
+  lineFollowerSensorRead();  // samples line sensors
+  gatherSensors();           // gather data from local sensors
+  sendUARTdata();            // send sensor data over UART if new data is available
   // Serial data is gathered via callback... is it?
- //serialEvent();
+  serialEvent();
   handleESPnow();  // handles all ESPnow data transmission, if serial data is available to send
 }
