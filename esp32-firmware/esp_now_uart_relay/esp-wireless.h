@@ -11,15 +11,19 @@ Might turn into a class later idk.
 
 #pragma once
 
-
-
 #include <esp_now.h>
 
-void trimCharArray(char *inArray) {
-  char nullChar[2] = "\0";              // This must be 2 char long
-  int index = strcspn(inArray, "\n");  // Find the location of the newline char
-  inArray[index] = *nullChar;
-}
+
+
+
+
+
+
+
+
+
+
+// Lower Level Functions
 
 // Init ESP Now with fallback
 void InitESPNow() {
@@ -44,9 +48,9 @@ void ScanForRx() {
   // reset on each scan
   bool moduleRxFound = 0;
   memset(&moduleRx, 0, sizeof(moduleRx));
-//  Serial.println("");
+  //  Serial.println("");
   if (scanResults == 0) {
-#if WIFI_DEBUG == true    
+#if WIFI_DEBUG == true
     Serial.println("ESP32: No WiFi devices in AP Mode found");
 #endif
   } else {
@@ -74,7 +78,7 @@ void ScanForRx() {
       // Check if the current device starts with `moduleRx`
       if (SSID.indexOf("moduleRx") == 0) {
         // SSID of interest
-      #if PRINT_SCAN_SUMMARY == true
+#if PRINT_SCAN_SUMMARY == true
         Serial.println("ESP32: Found a moduleRx.");
         Serial.print(i + 1);
         Serial.print(": ");
@@ -86,7 +90,7 @@ void ScanForRx() {
         Serial.print(RSSI);
         Serial.print(")");
         Serial.println("");
-      #endif
+#endif
         // Get BSSID => Mac Address of the moduleRx
         int mac[6];
         if (6 == sscanf(BSSIDstr.c_str(), "%x:%x:%x:%x:%x:%x", &mac[0], &mac[1], &mac[2], &mac[3], &mac[4], &mac[5])) {
@@ -108,14 +112,14 @@ void ScanForRx() {
   if (moduleRxFound) {
 #if PRINT_MODULEFOUND == true
     Serial.println("ESP32: moduleRx Found, processing..");
+#endif
     initScan = false;
-#endif
   } else {
-    if (!initScan){
+    if (!initScan) {
 #if PRINT_MODULEFOUND == true
-    Serial.println("ESP32: moduleRx Not Found, trying again.");
+      Serial.println("ESP32: moduleRx Not Found, trying again.");
 #endif
-    initScan = true;
+      initScan = true;
     }
   }
 

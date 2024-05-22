@@ -70,32 +70,39 @@ ESP-NOW technology also has the following limitations:
 #include <esp_now.h>
 #include <WiFi.h>
 #include <esp_wifi.h>  // only for esp_wifi_set_channel()
-
+#include <autoDelay.h>
 
 
 // Global copy of peer data for Receiver
 esp_now_peer_info_t moduleRx;
-#define CHANNEL 1
+
+
+// Debugging Printout
 #define PRINT_SCAN_SUMMARY false
 #define PRINTSCANRESULTS false
 #define PRINT_MODULEFOUND false
 #define WIFI_DEBUG false
-
-#define DELETEBEFOREPAIR 0
-
 #define PRINT_TX_STATS false
 #define PRINT_TX_STATUS false
 #define PRINT_REMOTE_STATUS false
-
 #define PRINT_UART_RX false
 #define PRINT_ESPNOW_TX false
 
+// ESPnow options
+#define CHANNEL 1
+#define DELETEBEFOREPAIR 0
 
+#include <HardwareSerial.h>
 
-#include "esp-wireless.h"
+HardwareSerial mySerial(0);  // define a Serial for UART1
+const int MySerialRX = 3;
+const int MySerialTX = 1;
 
 #define STRUCT_MSG_SIZE 150
 #define UART_MSG_SIZE 150
+
+
+
 
 // Structure example to send data
 // Must match the receiver structure
@@ -109,134 +116,62 @@ typedef struct struct_message {
 } struct_message;
 
 
-// Create a struct_message called myData
-struct_message myData;
-
-
-
-
-bool flag = false;
-
-
-
-#include <HardwareSerial.h>
-
-HardwareSerial mySerial(0);  // define a Serial for UART1
-const int MySerialRX = 3;
-const int MySerialTX = 1;
+// Create a struct_message called txData
+struct_message txData;
+struct_message uartData;
 
 
 char inputString[STRUCT_MSG_SIZE];  // specify max length of 32 chars? bytes?
 char overflowBuffer[STRUCT_MSG_SIZE];
 bool stringComplete;
 
-byte byteCount = 0;
-byte strLength;
 
+bool bufferOverflow = false;
+bool uartTXdata_available = false;  // flags if new sensor data is available to send over UART connection
 
 /*
-  SerialEvent occurs whenever a new data comes in the hardware serial RX. This
-  routine is run between each time loop() runs, so using delay inside loop can
-  delay response. Multiple bytes of data may be available.
+https://forum.arduino.cc/t/simple-code-to-send-a-struct-between-arduinos-using-serial/672196
 */
 
 
-bool bufferOverflow = false;
+#include "globals.h"
+#include "uartFunctions.h"
+#include "esp-wireless.h"
+#include "ESPnowFunctions.h"
 
-void serialEvent() {
-  // here we could use our MySerial normally
-  while (mySerial.available() > 0) {
-    // uint8_t byteFromSerial = MySerial.read();
-    char inChar = (char)Serial.read();
-    //  Serial.print(inChar);
-    //  Serial.print("  byteCount: ");
-    //  Serial.println(byteCount);
-    // add it to the inputString:
-    if (byteCount <= STRUCT_MSG_SIZE) {
-      inputString[byteCount] = inChar;  // Compiler has issue with this line
-      byteCount++;                      // if the incoming character is a newline, set a flag so the main loop can
-      strLength = byteCount;
-    } else {
-      Serial.print("ESP32: UART Message Exceeds Buffer Size, filling overflow ");
-      overflowBuffer[byteCount = STRUCT_MSG_SIZE];
-    }
 
-    // do something about it:
-    if (inChar == '\n' or byteCount >= UART_MSG_SIZE) {  // if null character reached or buffer is filled, then string is completed
-      stringComplete = true;
-      byteCount = 0;
-      //  Serial.println("\n\nUART Data Received: ");
-      trimCharArray(inputString);  // added 22/05/2024
-#if PRINT_UART_RX == true
-      Serial.println(inputString);
-#endif
-    }
-  }
-}
+
+
+
+
 
 
 void sendUARTdata() {
-}
-
-
-// send data
-void sendESPnowData() {
-  if (stringComplete) {
-    // Serial.println(inputString);
-    // Package data as required
-    // char dataBuffer[32];
-    // sprintf(dataBuffer, "Data: %2i, %2i ", data, data + 1);
-    strcpy(myData.msg, inputString);
-    myData.num_0 = 1;
-    myData.num_1 = 2;
-    myData.num_2 = 3;
-    myData.num_3 = 4;
-    myData.flag = flag;
-    // send data
-    const uint8_t *peer_addr = moduleRx.peer_addr;
-#if PRINT_ESPNOW_TX == true
-    Serial.print("Sending: ");
-    Serial.println(myData.msg);
-#endif
-    esp_err_t result = esp_now_send(peer_addr, (uint8_t *)&myData, sizeof(myData));
-#if PRINT_TX_STATUS == true
-    // Analise result
-    Serial.print("Send Status: ");
-    if (result == ESP_OK) {
-      Serial.println("Success");
-    } else if (result == ESP_ERR_ESPNOW_NOT_INIT) {
-      // How did we get so far!!
-      Serial.println("ESPNOW not Init.");
-    } else if (result == ESP_ERR_ESPNOW_ARG) {
-      Serial.println("Invalid Argument");
-    } else if (result == ESP_ERR_ESPNOW_INTERNAL) {
-      Serial.println("Internal Error");
-    } else if (result == ESP_ERR_ESPNOW_NO_MEM) {
-      Serial.println("ESP_ERR_ESPNOW_NO_MEM");
-    } else if (result == ESP_ERR_ESPNOW_NOT_FOUND) {
-      Serial.println("Peer not found.");
-    } else {
-      Serial.println("Not sure what happened");
-    }
-#endif
-    stringComplete = false;
+  if (uartTXdata_available) {
+    //mySerial.println(char(uartData));
+    uartTXdata_available = false;
   }
 }
 
 
 
-// callback when data is sent from moduleTx to moduleRx
-void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
-#if PRINT_TX_STATS == true
-  char macStr[18];
-  snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
-           mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
-  Serial.print("Last Packet Sent to: ");
-  Serial.println(macStr);
-  Serial.print("Last Packet Send Status: ");
-  Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
-#endif
+autoDelay sampleDelay;
+#define SENSOR_SAMPLERATE_mS 1000
+// Gather and sort all local sensors into data structure to send via UART to local periferal device
+void gatherSensors() {
+  if (sampleDelay.millisDelay(SENSOR_SAMPLERATE_mS)) {
+    uartData.num_0 = 1;
+    uartData.num_1 = 2;
+    uartData.num_2 = 3;
+    uartData.num_3 = 4;
+    uartTXdata_available = true;
+  }
 }
+
+
+
+
+
 
 
 
@@ -264,26 +199,8 @@ void setup() {
 
 
 void loop() {
-  // In the loop we scan for moduleRx
-  ScanForRx();
-  // If moduleRx is found, it would be populate in `moduleRx` variable
-  // We will check if `moduleRx` is defined and then we proceed further
-  if (moduleRx.channel == CHANNEL) {  // check if moduleRx channel is defined
-    // `moduleRx` is defined
-    // Add moduleRx as peer if it has not been added already
-    bool isPaired = manageRx();
-    if (isPaired) {
-      // pair success or already paired
-      // Send data to device
-      sendESPnowData();
-    } else {
-      // moduleRx pair failed
-      Serial.println("moduleRx pair failed!");
-    }
-  } else {
-    // No moduleRx found to process
-  }
-
-  // wait for 3seconds to run the logic again
-  // delay(3000);
+  gatherSensors();  // gather data from local sensors
+  sendUARTdata();   // send sensor data over UART if new data is available
+  // Serial data is gathered via callback
+  handleESPnow();  // handles all ESPnow data transmission, if serial data is available to send
 }
