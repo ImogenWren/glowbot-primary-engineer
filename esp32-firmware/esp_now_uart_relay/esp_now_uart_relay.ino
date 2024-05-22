@@ -85,9 +85,10 @@ esp_now_peer_info_t moduleRx;
 #define PRINT_TX_STATS false
 #define PRINT_TX_STATUS false
 #define PRINT_REMOTE_STATUS false
-#define PRINT_UART_RX false
+#define PRINT_UART_RX true
 #define PRINT_ESPNOW_TX false
-#define PRINT_UART_DATA_SENT true
+#define PRINT_UART_DATA_SENT false
+#define PRINT_LINE_SENSOR_DATA false
 
 // ESPnow options
 #define CHANNEL 1
@@ -95,7 +96,7 @@ esp_now_peer_info_t moduleRx;
 
 #include <HardwareSerial.h>
 
-HardwareSerial mySerial(1);  // define a Serial for UART1
+//HardwareSerial mySerial(1);  // define a Serial for UART1
 const int MySerialRX = 16;
 const int MySerialTX = 17;
 
@@ -127,14 +128,17 @@ struct uartStruct {
   uint8_t val_1;     //  1
   uint8_t val_2;     //  1
   uint8_t val_3;     //  1
-  byte padding[10];  // 10
+  bool leftSwitch;   //  1
+  bool rightSwitch;  //  1
+  bool button;       //  1
+  byte padding[9];  //  9
                      //------
-                     // 20
+                     // 32
 };
 
-uartStruct uartData = { "xxx", 0, 0, 0, 0, 0 };  // dummy load of data
+uartStruct uartData = { "xxx", 0, 0, 0, 0, 0,0 ,0 ,0 };  // dummy load of data
 
-const byte startMarker = 255;
+const byte startMarker = 255;    // used to note start of packet for UART struct parsing
 const byte uartDataLen = sizeof(uartData);
 
 char inputString[STRUCT_MSG_SIZE];  // specify max length of 32 chars? bytes?
@@ -152,54 +156,28 @@ https://forum.arduino.cc/t/simple-code-to-send-a-struct-between-arduinos-using-s
 
 #include "globals.h"
 #include "uartFunctions_Rx.h"
-//#include "uartFunctions_Tx.h"
+#include "uartFunctions_Tx.h"
 #include "esp-wireless.h"
 #include "ESPnowFunctions.h"
+#include "lineFollower.h"
 
 
 
-
-
-
-
-
-void sendUARTdata() {
-  if (uartTXdata_available) {
-    mySerial.write(startMarker);
-    mySerial.write((byte*)&uartData, uartDataLen);
-#if PRINT_UART_DATA_SENT == true
-    Serial.print("Sent: ");
-    Serial.print(uartData.msg);
-    Serial.print(' ');
-    Serial.print(uartData.val_0);
-    Serial.print(' ');
-    Serial.print(uartData.val_1);
-    Serial.print(' ');
-    Serial.print(uartData.val_2);
-    Serial.print(' ');
-    Serial.print(uartData.val_3);
-    Serial.println("");
-#endif
-    uartTXdata_available = false;
-  }
-}
 
 
 
 autoDelay sampleDelay;
-#define SENSOR_SAMPLERATE_mS 1000
+#define SENSOR_SAMPLERATE_mS 500
 // Gather and sort all local sensors into data structure to send via UART to local periferal device
 void gatherSensors() {
   if (sampleDelay.millisDelay(SENSOR_SAMPLERATE_mS)) {
-    uartData.val_0 = 1;
-    uartData.val_1 = 2;
-    uartData.val_2 = 3;
-    uartData.val_3 = 4;
+    uartData.val_0 = leftLineSense;
+    uartData.val_1 = centerLineSense;
+    uartData.val_2 = rightLineSense;
+    uartData.val_3 = directionLineSense;
     uartTXdata_available = true;
   }
 }
-
-
 
 
 
@@ -224,14 +202,16 @@ void setup() {
   // get the status of Trasnmitted packet
   esp_now_register_send_cb(OnDataSent);
   // Setup serial port to listen for incoming data
-  mySerial.begin(115200, SERIAL_8N1, MySerialRX, MySerialTX);
+  Serial2.begin(115200, SERIAL_8N1, MySerialRX, MySerialTX);
 }
 
 
 
 void loop() {
-  gatherSensors();  // gather data from local sensors
-  sendUARTdata();   // send sensor data over UART if new data is available
-  // Serial data is gathered via callback
+  lineFollowerSensorRead();  // samples line sensors
+  gatherSensors();           // gather data from local sensors
+  sendUARTdata();            // send sensor data over UART if new data is available
+  // Serial data is gathered via callback... is it?
+  serialEvent();
   handleESPnow();  // handles all ESPnow data transmission, if serial data is available to send
 }

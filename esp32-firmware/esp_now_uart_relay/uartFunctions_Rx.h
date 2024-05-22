@@ -16,9 +16,9 @@ byte strLength;
 
 void serialEvent() {
   // here we could use our MySerial normally
-  while (mySerial.available() > 0) {
+  while (Serial2.available() > 0) {
     // uint8_t byteFromSerial = MySerial.read();
-    char inChar = (char)Serial.read();
+    char inChar = (char)Serial2.read();
     //  Serial.print(inChar);
     //  Serial.print("  byteCount: ");
     //  Serial.println(byteCount);
