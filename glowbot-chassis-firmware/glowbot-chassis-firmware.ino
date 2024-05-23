@@ -21,7 +21,7 @@ Notes:
 */
 
 // Program Options Enable/Disable
-#define ENABLE_MOTOR_DRIVE true
+#define ENABLE_MOTOR_DRIVE false
 
 #include <Arduino.h>
 #include "Pins.h"
@@ -209,7 +209,8 @@ void sm_state_reverse() {
 
 void sm_run(void) {
   // Do all Functions that happen in every state:
-  getDistance();
+ // getDistance();
+ distance_value = 55.0;
   setMotionState();
   printStatus();
   voltageMeasure();
@@ -247,7 +248,7 @@ void sm_run(void) {
       sm_state_park();
       break;
     case STATE_FOLLOWLINE:
-      sm_state_followline(0, 0, 0, 0);
+      sm_state_followline(leftLine, centerLine, rightLine, lineDirection);
       break;
     case STATE_PATHBLOCKED:
       sm_state_pathblocked();

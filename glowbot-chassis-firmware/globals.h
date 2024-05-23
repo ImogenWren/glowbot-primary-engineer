@@ -105,10 +105,10 @@ void printStatus() {
 
 
     if (low_voltage_flag) {
-      Serial.print(F("Low Voltage Detected!"));
+      Serial.print(F(" Low Voltage Detected!"));
     }
     if (carParked) {
-      Serial.print(F("Car Parked"));
+      Serial.print(F(" Car Parked"));
     }
     Serial.println("");
   }

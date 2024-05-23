@@ -58,10 +58,13 @@ bool lineFollow(uint8_t left, uint8_t center, uint8_t right, uint8_t direction) 
     if (direction >= 48 || direction < 52) {
       onLine = true;
       carForward();
-    } else if (direction < 48) {
+    //  Serial.println("On Line");
+    } else if (direction <= 48) {
       carTurnRight();
+      Serial.println("TURN RIGHT");
     } else if (direction >= 52) {      
       carTurnLeft();
+      Serial.println("TURN LEFT");
     }
  // } else {
  //   findLine(left, center, right, direction);
