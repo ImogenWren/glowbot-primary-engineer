@@ -8,13 +8,13 @@
 // Additionally obstacle avoidance will be run in this state as a seperate function
 // direction of 50 = in the middle
 
-bool onLine = true;
+
 
 autoDelay lineDelay;
 
 
 
-#define LINE_MODE_DELAY_mS 400
+#define LINE_MODE_DELAY_mS 200
 int lineFindMode = 0;
 
 void findLine(uint8_t left, uint8_t center, uint8_t right, uint8_t direction) {
@@ -50,7 +50,7 @@ void findLine(uint8_t left, uint8_t center, uint8_t right, uint8_t direction) {
 
 
 
-void lineFollow(uint8_t left, uint8_t center, uint8_t right, uint8_t direction) {
+bool lineFollow(uint8_t left, uint8_t center, uint8_t right, uint8_t direction) {
   if (onLine) {
     if (left < 10 && center < 10 && right < 10) {
       onLine = false;
@@ -58,11 +58,12 @@ void lineFollow(uint8_t left, uint8_t center, uint8_t right, uint8_t direction) 
     if (direction >= 48 || direction < 52) {
       carForward();
     } else if (direction < 48) {
-      carTurnLeft();
-    } else if (direction >= 52) {
       carTurnRight();
+    } else if (direction >= 52) {      
+      carTurnLeft();
     }
   } else {
     findLine(left, center, right, direction);
   }
+  return onLine;
 }

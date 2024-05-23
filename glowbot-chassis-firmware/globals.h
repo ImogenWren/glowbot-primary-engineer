@@ -12,7 +12,7 @@ typedef enum {
   STATE_UNPARK,
   STATE_PARK,
   STATE_FORWARD,
-  STATE_BACKWARD,
+  STATE_REVERSE,
   STATE_TURNLEFT,
   STATE_TURNRIGHT,
   STATE_FOLLOWLINE,
@@ -36,7 +36,7 @@ char stateNames[][20] = {
   "STATE_UNPARK",
   "STATE_PARK",
   "STATE_FORWARD",
-  "STATE_BACKWARD",
+  "STATE_REVERSE",
   "STATE_TURNLEFT",
   "STATE_TURNRIGHT",
   "STATE_FOLLOWLINE",
@@ -56,6 +56,8 @@ uint8_t leftLine = 0;
 uint8_t centerLine = 0;
 uint8_t rightLine = 0;
 uint8_t lineDirection = 0;
+
+bool onLine = true;
 
 bool leftSwitch;
 bool rightSwitch;
@@ -90,13 +92,15 @@ void printStatus() {
     Serial.print(F(", "));
     Serial.print(lineDirection);
     Serial.print(F(", "));
-    Serial.print(F("Switch: "));
-    Serial.print(leftSwitch);
-    Serial.print(F(", "));
-    Serial.print(rightSwitch);
-    Serial.print(F(", "));
-    Serial.print(button);
-    Serial.print(F(", "));
+    Serial.print(F("On Line: "));
+    Serial.print(onLine);
+  //  Serial.print(F("Switch: "));
+  //  Serial.print(leftSwitch);
+  //  Serial.print(F(", "));
+  //  Serial.print(rightSwitch);
+  //  Serial.print(F(", "));
+  //  Serial.print(button);
+  //  Serial.print(F(", "));
 
 
 
@@ -152,7 +156,7 @@ void carStopNow() {
 void parkCar() {
   function_mode = IDLE;
   motion_mode = STOP;
-  // carForward(210);
+  carForward(210);
   //  delay((kalmanfilter_angle - 30) * (kalmanfilter_angle - 30) / 8);
   carStop();  // This causes it to fall over frontways
   start_prev_time = millis();
@@ -162,32 +166,32 @@ void parkCar() {
 
 
 void unparkCar() {
-  setting_car_speed = 50;  // bug fix to try and stop it toppeling over on start
+  setting_car_speed = 20;  // bug fix to try and stop it toppeling over on start
   if (millis() - start_prev_time > 500 && kalmanfilter_angle >= balance_angle_min) {
     start_prev_time = millis();
     motion_mode = START;
   }
- // motion_mode = START;
+  motion_mode = START;
 }
 
 
 void setMotionState() {
   switch (motion_mode) {
     case FORWARD:
-      setting_car_speed = 40;
+      setting_car_speed = 10;     // origionally 40
       setting_turn_speed = 0;
       break;
     case BACKWARD:
-      setting_car_speed = -40;
+      setting_car_speed = -10;
       setting_turn_speed = 0;
       break;
     case TURNLEFT:
       setting_car_speed = 0;
-      setting_turn_speed = 50;
+      setting_turn_speed = 10;   // Origionally 50
       break;
     case TURNRIGHT:
       setting_car_speed = 0;
-      setting_turn_speed = -50;
+      setting_turn_speed = -10;
       break;
     case STANDBY:
       setting_car_speed = 0;

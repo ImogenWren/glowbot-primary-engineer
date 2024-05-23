@@ -37,16 +37,16 @@ autoDelay printDelay;
 #define PRINT_DELAY_mS 1000  // Delay between debugging sheduled prints to serial monitor
 
 // Debugging & Serial Print options (Note - when UART bridge is attached all serial printouts will be transmitted to receiver)
-#define PRINT_STATUS_UPDATE true     // prints periodic status messages to serial monitor
-#define PRINT_UART_RX false           // prints out data recieved over UART connection
-#define DEBUG_STATE_MACHINE false     // Prints output from state machine once per new state
-#define DEBUG_STATES false            // prints debug output from individual states when enabled
+#define PRINT_STATUS_UPDATE true   // prints periodic status messages to serial monitor
+#define PRINT_UART_RX false        // prints out data recieved over UART connection
+#define DEBUG_STATE_MACHINE false  // Prints output from state machine once per new state
+#define DEBUG_STATES false         // prints debug output from individual states when enabled
 
 // Program Options Enable/Disable
 #define ENABLE_MOTOR_DRIVE true
 
 // Navigation Algorithm Variables/Constants
-#define OBSTACLE_LIMIT_CM 50            //    Robot will enter obstacle avoidance mode if this limit is breached
+#define OBSTACLE_LIMIT_CM 50  //    Robot will enter obstacle avoidance mode if this limit is breached
 
 
 #include "globals.h"
@@ -61,8 +61,8 @@ void setup() {
   rgb.initialize();
   voltageInit();
   start_prev_time = millis();
-  carInitialize();     // Sets balanceCar function as an interrupt routine
-  motion_mode = STOP;  // added to try and stop it launching itself
+  carInitialize();  // Sets balanceCar function as an interrupt routine
+                    // motion_mode = STOP;  // added to try and stop it launching itself
 }
 
 
@@ -136,9 +136,9 @@ void sm_state_park() {
     Serial.println(F("State Machine: Unpark"));
 #endif
     stateDelay.resetDelayTime_mS();
-    parkCar();
     lastState = smState;
   }
+  parkCar();
   if (carParked) {
     smState = STATE_WAIT;
   }
@@ -150,10 +150,14 @@ void sm_state_followline(uint8_t left, uint8_t center, uint8_t right, uint8_t di
 #if DEBUG_STATES == true
     Serial.println(F("State Machine: followline"));
 #endif
-    lastState = smState;    
+    lastState = smState;
   }
 
-  lineFollow(left, center, right, direction);
+  bool line = lineFollow(left, center, right, direction);
+  if (!line){
+    smState = STATE_REVERSE;
+    nextState = STATE_FOLLOWLINE;
+  }
   if (distance_value <= OBSTACLE_LIMIT_CM) {  // If obstacle is encountered
     // Provide clause to exit state
     // or provide following state to goto direct
@@ -162,7 +166,7 @@ void sm_state_followline(uint8_t left, uint8_t center, uint8_t right, uint8_t di
   }
 }
 
-#define OBSTACLE_TIMEOUT_S 10
+#define OBSTACLE_TIMEOUT_S 5
 
 void sm_state_pathblocked() {
   if (lastState != smState) {  // Do anything here that needs to happen only once the state is entered for the first time
@@ -176,11 +180,29 @@ void sm_state_pathblocked() {
   if (distance_value > OBSTACLE_LIMIT_CM + 5) {  // If obstacle is removed
     smState = nextState;                         // go to the state passed from the last one
   }
-  if (stateDelay.secondsDelay(OBSTACLE_TIMEOUT_S)) {   // if timeout is reached, park the robot
-    smState = STATE_PARK;
+  if (stateDelay.secondsDelay(OBSTACLE_TIMEOUT_S)) {  // if timeout is reached, park the robot
+    smState = STATE_REVERSE;
   }
 }
 
+
+void sm_state_reverse() {
+  if (lastState != smState) {  // Do anything here that needs to happen only once the state is entered for the first time
+#if DEBUG_STATES == true
+    Serial.println(F("State Machine: reverse"));
+#endif
+    lastState = smState;
+    carBackward();  // stops movement but keeps upright
+    stateDelay.resetDelayTime_mS();
+  }
+  if (distance_value > OBSTACLE_LIMIT_CM + 20) {  // If obstacle is removed
+    smState = nextState;                          // go to the state passed from the last one
+  }
+  if (stateDelay.secondsDelay(OBSTACLE_TIMEOUT_S)) {  // if timeout is reached, park the robot
+    smState = nextState;
+    // motion_mode = REVERSE;
+  }
+}
 
 
 void sm_run(void) {
@@ -190,13 +212,13 @@ void sm_run(void) {
   printStatus();
   voltageMeasure();
   checkParked();
-  uartRxStructure();   // Recieve UART Data, these two functions could be tied into one call
-  parseUARTdata();      // Parse UART data into required variables
+  uartRxStructure();  // Recieve UART Data, these two functions could be tied into one call
+  parseUARTdata();    // Parse UART data into required variables
 
   // Place any Movement disabling code here
   if (low_voltage_flag || carParked) {
     //  carStopNow();                        // actually just want to disable motor output but still run state machine as is?
-  //  digitalWrite(STBY_PIN, HIGH);  // otherwise could send to a stopped state
+    //  digitalWrite(STBY_PIN, HIGH);  // otherwise could send to a stopped state
   }
 
   // For debugging state machine
@@ -219,17 +241,23 @@ void sm_run(void) {
     case STATE_UNPARK:
       sm_state_unpark();
       break;
+    case STATE_PARK:
+      sm_state_park();
+      break;
     case STATE_FOLLOWLINE:
       sm_state_followline(0, 0, 0, 0);
       break;
     case STATE_PATHBLOCKED:
       sm_state_pathblocked();
       break;
+    case STATE_REVERSE:
+      sm_state_reverse();
+      break;
     default:
       Serial.print(F("Exception in State Machine, Unknown State: ["));
       Serial.print(smState);
       Serial.println(F("]"));
-       smState = STATE_INIT;
+      smState = STATE_INIT;
       break;
   }
 }
