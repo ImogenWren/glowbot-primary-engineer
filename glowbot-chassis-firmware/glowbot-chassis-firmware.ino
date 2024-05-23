@@ -43,7 +43,7 @@ autoDelay printDelay;
 #define DEBUG_STATES false            // prints debug output from individual states when enabled
 
 // Program Options Enable/Disable
-#define ENABLE_MOTOR_DRIVE false;
+#define ENABLE_MOTOR_DRIVE true
 
 // Navigation Algorithm Variables/Constants
 #define OBSTACLE_LIMIT_CM 50            //    Robot will enter obstacle avoidance mode if this limit is breached
@@ -121,7 +121,6 @@ void sm_state_unpark() {
     Serial.println(F("State Machine: Unpark"));
 #endif
     stateDelay.resetDelayTime_mS();
-
     lastState = smState;
   }
   unparkCar();
@@ -146,15 +145,15 @@ void sm_state_park() {
 }
 
 
-void sm_state_followline(int rightSense, int midSense, int leftSense, int direction) {
+void sm_state_followline(uint8_t left, uint8_t center, uint8_t right, uint8_t direction) {
   if (lastState != smState) {  // Do anything here that needs to happen only once the state is entered for the first time
 #if DEBUG_STATES == true
     Serial.println(F("State Machine: followline"));
 #endif
-    lastState = smState;
-    
+    lastState = smState;    
   }
-  carForward();
+
+  lineFollow(left, center, right, direction);
   if (distance_value <= OBSTACLE_LIMIT_CM) {  // If obstacle is encountered
     // Provide clause to exit state
     // or provide following state to goto direct
@@ -177,7 +176,7 @@ void sm_state_pathblocked() {
   if (distance_value > OBSTACLE_LIMIT_CM + 5) {  // If obstacle is removed
     smState = nextState;                         // go to the state passed from the last one
   }
-  if (stateDelay.secondsDelay(OBSTACLE_TIMEOUT_S)) {
+  if (stateDelay.secondsDelay(OBSTACLE_TIMEOUT_S)) {   // if timeout is reached, park the robot
     smState = STATE_PARK;
   }
 }
@@ -197,7 +196,7 @@ void sm_run(void) {
   // Place any Movement disabling code here
   if (low_voltage_flag || carParked) {
     //  carStopNow();                        // actually just want to disable motor output but still run state machine as is?
-    digitalWrite(STBY_PIN, HIGH);  // otherwise could send to a stopped state
+  //  digitalWrite(STBY_PIN, HIGH);  // otherwise could send to a stopped state
   }
 
   // For debugging state machine

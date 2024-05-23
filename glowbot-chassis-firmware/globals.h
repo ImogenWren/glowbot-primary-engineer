@@ -78,9 +78,9 @@ void printStatus() {
     Serial.print(F(", Ping: "));
     Serial.print(distance_value);
     Serial.print(F(" cm"));
-  //  Serial.print(F(", Batt: "));
- //   Serial.print(voltage);
-//    Serial.print(F(" V "));
+    Serial.print(F(", Batt: "));
+    Serial.print(voltage);
+    Serial.print(F(", "));
     Serial.print(F(" Line: "));
     Serial.print(leftLine);
     Serial.print(F(", "));
@@ -162,12 +162,12 @@ void parkCar() {
 
 
 void unparkCar() {
-  setting_car_speed = 40;  // bug fix to try and stop it toppeling over on start
+  setting_car_speed = 50;  // bug fix to try and stop it toppeling over on start
   if (millis() - start_prev_time > 500 && kalmanfilter_angle >= balance_angle_min) {
     start_prev_time = millis();
     motion_mode = START;
   }
-  motion_mode = START;
+ // motion_mode = START;
 }
 
 
