@@ -21,7 +21,7 @@ Notes:
 */
 
 // Program Options Enable/Disable
-#define ENABLE_MOTOR_DRIVE false
+#define ENABLE_MOTOR_DRIVE true
 
 #include <Arduino.h>
 #include "Pins.h"

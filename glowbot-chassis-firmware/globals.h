@@ -178,11 +178,11 @@ void unparkCar() {
 void setMotionState() {
   switch (motion_mode) {
     case FORWARD:
-      setting_car_speed = 10;     // origionally 40
+      setting_car_speed = 2;     // origionally 40
       setting_turn_speed = 0;
       break;
     case BACKWARD:
-      setting_car_speed = -10;
+      setting_car_speed = -2;
       setting_turn_speed = 0;
       break;
     case TURNLEFT:
