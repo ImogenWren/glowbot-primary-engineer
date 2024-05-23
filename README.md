@@ -5,7 +5,8 @@
 _Glowbot is a 2 wheeled, reverse pendulumn robot capable of autonamous navigation around a domestic & controlled educational environment._
 
 ## System Diagram
-![image](https://github.com/ImogenWren/glowbot-primary-engineer/assets/97303986/764ae6c7-9095-476f-a835-7794d4ebb677)
+![image](https://github.com/ImogenWren/glowbot-primary-engineer/assets/97303986/05dd793d-3de8-459d-883f-0c76b82fa184)
+
 
 
 ### Major System Components
