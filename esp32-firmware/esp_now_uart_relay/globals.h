@@ -8,9 +8,9 @@ bool flag = false;
 
 
 // Line Sensing
-const int leftSensorPin = A13;
-const int centerSensorPin = A14;
-const int rightSensorPin = A15;
+const int rightSensorPin = 34;   //Yellow
+const int centerSensorPin = 35;   // Green
+const int leftSensorPin = 32;     // Pink
 
 uint8_t leftLineSense;
 uint8_t centerLineSense;
