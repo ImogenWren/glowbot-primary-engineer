@@ -120,6 +120,7 @@ void balanceCar() {
     pwm_left = 0;
     pwm_right = 0;
   } else {
+#if ENABLE_MOTOR_DRIVE == true
     if (pwm_left < 0) {
       digitalWrite(AIN1, 1);
       analogWrite(PWMA_LEFT, -pwm_left);
@@ -134,6 +135,7 @@ void balanceCar() {
       digitalWrite(BIN1, 0);
       analogWrite(PWMB_RIGHT, pwm_right);
     }
+#endif
   }
 }
 

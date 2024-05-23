@@ -51,19 +51,20 @@ void findLine(uint8_t left, uint8_t center, uint8_t right, uint8_t direction) {
 
 
 bool lineFollow(uint8_t left, uint8_t center, uint8_t right, uint8_t direction) {
-  if (onLine) {
+ // if (onLine) {
     if (left < 10 && center < 10 && right < 10) {
       onLine = false;
-    }
+    } 
     if (direction >= 48 || direction < 52) {
+      onLine = true;
       carForward();
     } else if (direction < 48) {
       carTurnRight();
     } else if (direction >= 52) {      
       carTurnLeft();
     }
-  } else {
-    findLine(left, center, right, direction);
-  }
+ // } else {
+ //   findLine(left, center, right, direction);
+ // }
   return onLine;
 }

@@ -20,6 +20,9 @@ Notes:
 
 */
 
+// Program Options Enable/Disable
+#define ENABLE_MOTOR_DRIVE true
+
 #include <Arduino.h>
 #include "Pins.h"
 #include "mode.h"
@@ -42,8 +45,7 @@ autoDelay printDelay;
 #define DEBUG_STATE_MACHINE false  // Prints output from state machine once per new state
 #define DEBUG_STATES false         // prints debug output from individual states when enabled
 
-// Program Options Enable/Disable
-#define ENABLE_MOTOR_DRIVE true
+
 
 // Navigation Algorithm Variables/Constants
 #define OBSTACLE_LIMIT_CM 50  //    Robot will enter obstacle avoidance mode if this limit is breached
@@ -155,8 +157,8 @@ void sm_state_followline(uint8_t left, uint8_t center, uint8_t right, uint8_t di
 
   bool line = lineFollow(left, center, right, direction);
   if (!line){
-    smState = STATE_REVERSE;
-    nextState = STATE_FOLLOWLINE;
+  //  smState = STATE_REVERSE;
+  //  nextState = STATE_FOLLOWLINE;
   }
   if (distance_value <= OBSTACLE_LIMIT_CM) {  // If obstacle is encountered
     // Provide clause to exit state
