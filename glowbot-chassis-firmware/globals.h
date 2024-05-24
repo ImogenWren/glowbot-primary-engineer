@@ -75,8 +75,8 @@ void printStatus() {
     Serial.print(stateNames[smState]);
     Serial.print(F(", Move: "));
     Serial.print(motionModeName[motion_mode]);
-//    Serial.print(F(" Gyro: "));
-//    Serial.print(kalmanfilter.angle);
+    //    Serial.print(F(" Gyro: "));
+    //    Serial.print(kalmanfilter.angle);
     Serial.print(F(", Ping: "));
     Serial.print(distance_value);
     Serial.print(F(" cm"));
@@ -94,13 +94,13 @@ void printStatus() {
     Serial.print(F(", "));
     Serial.print(F("On Line: "));
     Serial.print(onLine);
-  //  Serial.print(F("Switch: "));
-  //  Serial.print(leftSwitch);
-  //  Serial.print(F(", "));
-  //  Serial.print(rightSwitch);
-  //  Serial.print(F(", "));
-  //  Serial.print(button);
-  //  Serial.print(F(", "));
+    Serial.print(F("Switch: "));
+    Serial.print(leftSwitch);
+    Serial.print(F(", "));
+    Serial.print(rightSwitch);
+    Serial.print(F(", "));
+    //  Serial.print(button);
+    //  Serial.print(F(", "));
 
 
 
@@ -189,7 +189,7 @@ void unparkCar() {
 void setMotionState() {
   switch (motion_mode) {
     case FORWARD:
-      setting_car_speed = 10;     // origionally 40 // working at 5
+      setting_car_speed = 10;  // origionally 40 // working at 5
       setting_turn_speed = 0;
       break;
     case BACKWARD:
@@ -198,19 +198,19 @@ void setMotionState() {
       break;
     case TURNLEFT:
       setting_car_speed = 0;
-      setting_turn_speed = 35;   // Origionally 50
+      setting_turn_speed = 20;  // Origionally 50
       break;
     case TURNRIGHT:
       setting_car_speed = 0;
-      setting_turn_speed = -35;
+      setting_turn_speed = -20;
       break;
-    case NUDGELEFT:                 // Added new 24/05/2024
+    case NUDGELEFT:  // Added new 24/05/2024
       setting_car_speed = 5;
-      setting_turn_speed = 23;   
+      setting_turn_speed = 20;
       break;
-    case NUDGERIGHT:                // Added new 24/05/2024
+    case NUDGERIGHT:  // Added new 24/05/2024
       setting_car_speed = 5;
-      setting_turn_speed = -23;
+      setting_turn_speed = -20;
       break;
     case STANDBY:
       setting_car_speed = 0;

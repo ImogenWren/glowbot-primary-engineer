@@ -131,14 +131,14 @@ struct uartStruct {
   bool leftSwitch;   //  1
   bool rightSwitch;  //  1
   bool button;       //  1
-  byte padding[9];  //  9
+  byte padding[9];   //  9
                      //------
                      // 32
 };
 
-uartStruct uartData = { "xxx", 0, 0, 0, 0, 0,0 ,0 ,0 };  // dummy load of data
+uartStruct uartData = { "xxx", 0, 0, 0, 0, 0, 0, 0, 0 };  // dummy load of data
 
-const byte startMarker = 255;    // used to note start of packet for UART struct parsing
+const byte startMarker = 255;  // used to note start of packet for UART struct parsing
 const byte uartDataLen = sizeof(uartData);
 
 char inputString[STRUCT_MSG_SIZE];  // specify max length of 32 chars? bytes?
@@ -161,13 +161,15 @@ https://forum.arduino.cc/t/simple-code-to-send-a-struct-between-arduinos-using-s
 #include "ESPnowFunctions.h"
 #include "lineFollower.h"
 
+#define RIGHT_SWITCH_PIN 26
+#define LEFT_SWITCH_PIN 27
 
-
-
+bool leftSwitchState;
+bool rightSwitchState;
 
 
 autoDelay sampleDelay;
-#define SENSOR_SAMPLERATE_mS 100
+#define SENSOR_SAMPLERATE_mS 300
 // Gather and sort all local sensors into data structure to send via UART to local periferal device
 void gatherSensors() {
   if (sampleDelay.millisDelay(SENSOR_SAMPLERATE_mS)) {
@@ -175,11 +177,16 @@ void gatherSensors() {
     uartData.val_1 = centerLineSense;
     uartData.val_2 = rightLineSense;
     uartData.val_3 = directionLineSense;
+    uartData.leftSwitch = leftSwitchState;
+    uartData.rightSwitch = rightSwitchState;
     uartTXdata_available = true;
   }
 }
 
-
+void sampleLimitSwitches() {
+  leftSwitchState = digitalRead(LEFT_SWITCH_PIN);
+  rightSwitchState = digitalRead(RIGHT_SWITCH_PIN);
+}
 
 
 
@@ -201,6 +208,8 @@ void setup() {
   // Once ESPNow is successfully Init, we will register for Send CB to
   // get the status of Trasnmitted packet
   esp_now_register_send_cb(OnDataSent);
+  pinMode(LEFT_SWITCH_PIN, INPUT_PULLUP);
+  pinMode(RIGHT_SWITCH_PIN, INPUT_PULLUP);
   // Setup serial port to listen for incoming data
   Serial2.begin(115200, SERIAL_8N1, MySerialRX, MySerialTX);
 }
@@ -209,8 +218,9 @@ void setup() {
 
 void loop() {
   lineFollowerSensorRead();  // samples line sensors
-  gatherSensors();           // gather data from local sensors
-  sendUARTdata();            // send sensor data over UART if new data is available
+  sampleLimitSwitches();
+  gatherSensors();  // gather data from local sensors
+  sendUARTdata();   // send sensor data over UART if new data is available
   serialEvent();
   handleESPnow();  // handles all ESPnow data transmission, if serial data is available to send
 }

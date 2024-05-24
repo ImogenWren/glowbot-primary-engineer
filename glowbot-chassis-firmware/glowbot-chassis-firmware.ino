@@ -37,7 +37,7 @@ Notes:
 #include <autoDelay.h>
 
 autoDelay printDelay;
-#define PRINT_DELAY_mS 200 // Delay between debugging sheduled prints to serial monitor
+#define PRINT_DELAY_mS 200  // Delay between debugging sheduled prints to serial monitor
 
 // Debugging & Serial Print options (Note - when UART bridge is attached all serial printouts will be transmitted to receiver)
 #define PRINT_STATUS_UPDATE true   // prints periodic status messages to serial monitor
@@ -125,7 +125,7 @@ void sm_state_unpark() {
     stateDelay.resetDelayTime_mS();
     lastState = smState;
   }
- // unparkCar();
+  // unparkCar();
   if (!carParked) {
     smState = STATE_WAIT;
   }
@@ -156,9 +156,9 @@ void sm_state_followline(uint8_t left, uint8_t center, uint8_t right, uint8_t di
   }
 
   bool line = lineFollow(left, center, right, direction);
-  if (!line){
-  //  smState = STATE_REVERSE;
-  //  nextState = STATE_FOLLOWLINE;
+  if (!line) {
+    //  smState = STATE_REVERSE;
+    //  nextState = STATE_FOLLOWLINE;
   }
   if (distance_value <= OBSTACLE_LIMIT_CM) {  // If obstacle is encountered
     // Provide clause to exit state
@@ -206,11 +206,13 @@ void sm_state_reverse() {
   }
 }
 
+// States for reverse left & reverse right?
+
 
 void sm_run(void) {
   // Do all Functions that happen in every state:
- getDistance();
- //distance_value = 55.0;
+  getDistance();
+  //distance_value = 55.0;
   setMotionState();
   printStatus();
   voltageMeasure();
@@ -222,6 +224,14 @@ void sm_run(void) {
   if (low_voltage_flag || carParked) {
     //  carStopNow();                        // actually just want to disable motor output but still run state machine as is?
     //  digitalWrite(STBY_PIN, HIGH);  // otherwise could send to a stopped state
+  }
+
+  if (!leftSwitch) {
+    nextState = STATE_FOLLOWLINE;
+    smState = STATE_REVERSE;
+  } else if (!rightSwitch) {
+    nextState = STATE_FOLLOWLINE;
+    smState = STATE_REVERSE;
   }
 
   // For debugging state machine
@@ -269,7 +279,7 @@ void sm_run(void) {
 void loop() {
   // navDemo();
 
- rgb.blink(100);
+  rgb.blink(100);
 
   sm_run();
 
