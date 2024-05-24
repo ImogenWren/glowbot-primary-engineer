@@ -16,11 +16,27 @@ _Glowbot is a 2 wheeled, reverse pendulumn robot capable of autonamous navigatio
 - Arduino Nano, main CPU for robot, supplied with kit and comes pre programmed with well made firmware installed.
 - ESP32 MCU as a communications & sensors package due to limited pins & processing power of arduino nano.
   - Note: Later plan to move main processing to ESP32, and reserve Arduino Nano for just control of the motors & accellerometer data.
-  - 
+
+
 #### Remote Monitoring System
  - Remote Monitor & Raspberry Pi
  - ESP32 running UART bridge RX firmware
 
+## Features
+_The Following features are intended to be functional in the first iteration_
+- Line Following using IR sensors
+- Obstacle avoidance using Ultrasound sensors
+- Obstacle detection using microswitch bumpers
+- Glowing Head Nightlight
+- Activation on touch sensor
+- Wireless communication to "Monitoring System"
 
-## System Diagram
+## Future Features
+_The following features are strech or future goals that could be incorperated with this platform to improve functionality_
+- Full two way communication between Base station & Vehicle, allow users from around the house to issue commands
+- Screen or interactive LED face
+- Natural Language processing for voice commands
+- Additional ultrasound sensors for 360deg obstacle tracking
+- Machine learning to build up picture of operational environment
+- Machine Vision to aid in navigation, target following etc
 
