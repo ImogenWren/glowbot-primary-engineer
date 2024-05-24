@@ -15,7 +15,8 @@ _Glowbot is a 2 wheeled, reverse pendulumn robot capable of autonamous navigatio
 - Elegoo Tumbler Robot Kit, Available from Amazon for ~£50
 
  #### Microcontrollers
-- Arduino Nano, main CPU for robot, supplied with kit and comes pre programmed with well made firmware installed.
+- Arduino Nano, main CPU for robot, supplied with kit and comes pre programmed with functional software including app integration.
+     - Origional code will be stripped and re-written to suit new purpose
 - ESP32 MCU as a communications & sensors package due to limited pins & processing power of arduino nano.
    - Note: Later plan to move main processing to ESP32, and reserve Arduino Nano for just control of the motors & accellerometer data.
 - ESP32 Faerfly Smart LED development board for lighting control.
