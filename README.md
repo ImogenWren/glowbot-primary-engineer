@@ -13,9 +13,26 @@ _Glowbot is a 2 wheeled, reverse pendulumn robot capable of autonamous navigatio
 ### Major System Components
 #### Robot Chassis
 - Elegoo Tumbler Robot Kit, Available from Amazon for ~£50
+
+ #### Microcontrollers
 - Arduino Nano, main CPU for robot, supplied with kit and comes pre programmed with well made firmware installed.
 - ESP32 MCU as a communications & sensors package due to limited pins & processing power of arduino nano.
-  - Note: Later plan to move main processing to ESP32, and reserve Arduino Nano for just control of the motors & accellerometer data.
+   - Note: Later plan to move main processing to ESP32, and reserve Arduino Nano for just control of the motors & accellerometer data.
+- ESP32 Faerfly Smart LED development board for lighting control.
+
+#### Sensors
+- Accellerometer
+- Line following IR sensor x3
+- Ultrasound sensor
+- Microswitch bumper x2
+- Capacative touch sensor for activation
+
+#### Output Devices
+- Motor driver x2
+- Robot chassis smart LED indicators
+- ESPnow wireless communication transceiver
+
+  
 
 
 #### Remote Monitoring System
@@ -39,4 +56,5 @@ _The following features are strech or future goals that could be incorperated wi
 - Additional ultrasound sensors for 360deg obstacle tracking
 - Machine learning to build up picture of operational environment
 - Machine Vision to aid in navigation, target following etc
+- Audio output device
 
