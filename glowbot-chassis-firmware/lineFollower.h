@@ -64,8 +64,9 @@ bool lineFollow(uint8_t left, uint8_t center, uint8_t right, uint8_t direction) 
     onLine = true;
   }
 //Serial.println(direction);
-  if (onLine) {
-    if ((direction >= 48 && direction <= 52) && onLine == true) {
+ // if (onLine) {
+   // if ((direction >= 49 && direction <= 51) && onLine == true) {
+    if ((direction == 50) && onLine == true) {
       carForward();
       //  Serial.println("On Line");
     } else if (direction <= 48) {
@@ -74,14 +75,21 @@ bool lineFollow(uint8_t left, uint8_t center, uint8_t right, uint8_t direction) 
     } else if (direction >= 52) {
       carTurnLeft();
      // Serial.println("TURN LEFT");
+    } else if (direction <= 50) {    
+      carNudgeRight();
+     // Serial.println("TURN RIGHT");
+    } else if (direction >= 50) {
+     carNudgeLeft();
+     // Serial.println("TURN LEFT");
     }
 
-  } else {
-    findLine(left, center, right, direction);
-    if (!printOnce) {
-      Serial.println("Finding Line");
-      printOnce = true;
-    }
-  }
+
+ // } else {
+ //   findLine(left, center, right, direction);
+ //   if (!printOnce) {
+ //     Serial.println("Finding Line");
+ //     printOnce = true;
+ //   }
+//  }
   return onLine;
 }

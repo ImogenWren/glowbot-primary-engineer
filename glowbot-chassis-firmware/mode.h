@@ -20,6 +20,8 @@ enum MOTION_MODE
   BACKWARD,
   TURNLEFT,
   TURNRIGHT,
+  NUDGELEFT,
+  NUDGERIGHT,
   STOP,
   START,
 } motion_mode = START;
@@ -30,6 +32,8 @@ char motionModeName[][10]{
   "BACKWARD",
   "TURNLEFT",
   "TURNRIGHT",
+  "NUDGELEFT",
+  "NUDGERIGHT",
   "STOP",
   "START",
 };

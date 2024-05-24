@@ -136,14 +136,25 @@ void carBackward() {
 
 
 void carTurnLeft() {
-  rgb.flashBlueColorLeft();
+  rgb.flashYellowColorLeft();
   motion_mode = TURNLEFT;
 }
 
 
 void carTurnRight() {
-  rgb.flashBlueColorRight();
+  rgb.flashYellowColorRight();
   motion_mode = TURNRIGHT;
+}
+
+void carNudgeLeft() {
+  rgb.flashBlueColorLeft();
+  motion_mode = NUDGELEFT;
+}
+
+
+void carNudgeRight() {
+  rgb.flashBlueColorRight();
+  motion_mode = NUDGERIGHT;
 }
 
 void carStopNow() {
@@ -178,20 +189,28 @@ void unparkCar() {
 void setMotionState() {
   switch (motion_mode) {
     case FORWARD:
-      setting_car_speed = 5;     // origionally 40
+      setting_car_speed = 10;     // origionally 40 // working at 5
       setting_turn_speed = 0;
       break;
     case BACKWARD:
-      setting_car_speed = -5;
+      setting_car_speed = -10;
       setting_turn_speed = 0;
       break;
     case TURNLEFT:
       setting_car_speed = 0;
-      setting_turn_speed = 15;   // Origionally 50
+      setting_turn_speed = 35;   // Origionally 50
       break;
     case TURNRIGHT:
       setting_car_speed = 0;
-      setting_turn_speed = -15;
+      setting_turn_speed = -35;
+      break;
+    case NUDGELEFT:                 // Added new 24/05/2024
+      setting_car_speed = 5;
+      setting_turn_speed = 23;   
+      break;
+    case NUDGERIGHT:                // Added new 24/05/2024
+      setting_car_speed = 5;
+      setting_turn_speed = -23;
       break;
     case STANDBY:
       setting_car_speed = 0;

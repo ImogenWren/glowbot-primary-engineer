@@ -37,7 +37,7 @@ Notes:
 #include <autoDelay.h>
 
 autoDelay printDelay;
-#define PRINT_DELAY_mS 1000  // Delay between debugging sheduled prints to serial monitor
+#define PRINT_DELAY_mS 200 // Delay between debugging sheduled prints to serial monitor
 
 // Debugging & Serial Print options (Note - when UART bridge is attached all serial printouts will be transmitted to receiver)
 #define PRINT_STATUS_UPDATE true   // prints periodic status messages to serial monitor
@@ -48,7 +48,7 @@ autoDelay printDelay;
 
 
 // Navigation Algorithm Variables/Constants
-#define OBSTACLE_LIMIT_CM 50  //    Robot will enter obstacle avoidance mode if this limit is breached
+#define OBSTACLE_LIMIT_CM 35  //    Robot will enter obstacle avoidance mode if this limit is breached
 
 
 #include "globals.h"
@@ -125,7 +125,7 @@ void sm_state_unpark() {
     stateDelay.resetDelayTime_mS();
     lastState = smState;
   }
-  unparkCar();
+ // unparkCar();
   if (!carParked) {
     smState = STATE_WAIT;
   }
@@ -209,8 +209,8 @@ void sm_state_reverse() {
 
 void sm_run(void) {
   // Do all Functions that happen in every state:
- // getDistance();
- distance_value = 55.0;
+ getDistance();
+ //distance_value = 55.0;
   setMotionState();
   printStatus();
   voltageMeasure();
@@ -269,7 +269,7 @@ void sm_run(void) {
 void loop() {
   // navDemo();
 
-  // rgb.blink(100);
+ rgb.blink(100);
 
   sm_run();
 

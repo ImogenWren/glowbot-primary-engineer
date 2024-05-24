@@ -167,7 +167,7 @@ https://forum.arduino.cc/t/simple-code-to-send-a-struct-between-arduinos-using-s
 
 
 autoDelay sampleDelay;
-#define SENSOR_SAMPLERATE_mS 500
+#define SENSOR_SAMPLERATE_mS 100
 // Gather and sort all local sensors into data structure to send via UART to local periferal device
 void gatherSensors() {
   if (sampleDelay.millisDelay(SENSOR_SAMPLERATE_mS)) {
@@ -211,7 +211,6 @@ void loop() {
   lineFollowerSensorRead();  // samples line sensors
   gatherSensors();           // gather data from local sensors
   sendUARTdata();            // send sensor data over UART if new data is available
-  // Serial data is gathered via callback... is it?
   serialEvent();
   handleESPnow();  // handles all ESPnow data transmission, if serial data is available to send
 }
