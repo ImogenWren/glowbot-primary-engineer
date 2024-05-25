@@ -84,6 +84,10 @@ uint8_t centerLine = 0;
 uint8_t rightLine = 0;
 uint8_t lineDirection = 0;
 
+int obsticalDetectedCount = 0;
+bool obsticalDetected = false;
+int lineLostCount = 0;
+
 bool onLine = true;
 
 bool leftSwitch;
@@ -97,20 +101,46 @@ bool button;
 
 void printStatus() {
 #if PRINT_STATUS_UPDATE == true
+  // gotta keep message under 150 char based on what ESP32 can send in one message
   if (printDelay.millisDelay(PRINT_DELAY_mS)) {
-    Serial.print(F("State: "));
-    Serial.print(stateNames[smState]);
-    Serial.print(F(", Move: "));
+
+/* 
+    char buffer[145];
+    char battChar[6];
+    char distChar[6];
+    dtostrf(voltage, 3, 2, battChar);
+    dtostrf(distance_value, 3, 2, distChar);
+
+    sprintf(buffer,
+            "st: %s mv:%s ds: %s bt: %s ln: %i %i %i %i lnst: %s Obs: %i %i lst: %i  ",
+            stateNames[smState],
+            motionModeName[motion_mode],
+            distChar,
+            battChar,
+            rightLine,
+            centerLine,
+            leftLine,
+            lineDirection,
+            lineStateName[lnState],
+            obsticalDetected,
+            obsticalDetectedCount,
+            lineLostCount);
+
+    Serial.print(buffer);
+*/    
+    Serial.print(F("St: "));
+   Serial.print(stateNames[smState]);
+   Serial.print(F(", Mv: "));
     Serial.print(motionModeName[motion_mode]);
     //    Serial.print(F(" Gyro: "));
     //    Serial.print(kalmanfilter.angle);
-    //   Serial.print(F(", Ping: "));
-    //   Serial.print(distance_value);
+    Serial.print(F(", Dis: "));
+    Serial.print(distance_value);
     //Serial.print(F(" cm"));
-     Serial.print(F(", Batt: "));
-     Serial.print(voltage);
+    Serial.print(F(", Bat: "));
+    Serial.print(voltage);
     Serial.print(F(", "));
-    Serial.print(F(" Line: "));
+    Serial.print(F(" Ln: "));
     Serial.print(leftLine);
     Serial.print(F(", "));
     Serial.print(centerLine);
@@ -119,23 +149,27 @@ void printStatus() {
     Serial.print(F(", "));
     Serial.print(lineDirection);
     Serial.print(F(", "));
-    Serial.print(F("lnState: "));
+    Serial.print(F("lnSt: "));
     Serial.print(lineStateName[lnState]);
-    Serial.print(F(" Switch: "));
+    Serial.print(F(" Swi: "));
     Serial.print(leftSwitch);
     Serial.print(F(", "));
     Serial.print(rightSwitch);
     Serial.print(F(", "));
+    Serial.print(F("Obst: "));
+    Serial.print(obsticalDetectedCount);
+    Serial.print(F(" Lost: "));
+    Serial.print(lineLostCount);
     //  Serial.print(button);
     //  Serial.print(F(", "));
 
 
 
     if (low_voltage_flag) {
-      Serial.print(F(" Low Voltage Detected!"));
+      Serial.print(F(" Low V!"));
     }
     if (carParked) {
-      Serial.print(F(" Car Parked"));
+      Serial.print(F(" Parked"));
     }
     Serial.println("");
   }
@@ -171,6 +205,16 @@ void carTurnLeft() {
 void carTurnRight() {
   rgb.flashYellowColorRight();
   motion_mode = TURNRIGHT;
+}
+
+void carSpeedLeft() {
+  rgb.flashGreenColorLeft();
+  motion_mode = SPEEDLEFT;
+}
+
+void carSpeedRight() {
+  rgb.flashGreenColorRight();
+  motion_mode = SPEEDRIGHT;
 }
 
 void carNudgeLeft() {
@@ -232,7 +276,7 @@ void unparkCar() {
 void setMotionState() {
   switch (motion_mode) {
     case FORWARD:
-      setting_car_speed = 10;  // origionally 40 // working at 5
+      setting_car_speed = 15;  // origionally 40 // working at 10 // testing at 15 kinda worked/ trying at 20
       setting_turn_speed = 0;
       break;
     case BACKWARD:
@@ -247,13 +291,21 @@ void setMotionState() {
       setting_car_speed = 0;
       setting_turn_speed = -20;
       break;
-    case NUDGELEFT:  // Added new 24/05/2024
-      setting_car_speed = 5;
-      setting_turn_speed = 20;
+    case SPEEDLEFT:
+      setting_car_speed = 10;
+      setting_turn_speed = 10;  //turned this down from 20
       break;
-    case NUDGERIGHT:  // Added new 24/05/2024
-      setting_car_speed = 5;
-      setting_turn_speed = -20;
+    case SPEEDRIGHT:
+      setting_car_speed = 10;
+      setting_turn_speed = -10;
+      break;
+    case NUDGELEFT:
+      setting_car_speed = 10;   // WORKING AT 10 // trying 15
+      setting_turn_speed = 20;  // WORKING AT 20 // trying at 15
+      break;
+    case NUDGERIGHT:
+      setting_car_speed = 10;    // WORKING AT 10 // trying 15
+      setting_turn_speed = -20;  // WORKING AT 20 // trying at 15
       break;
     case REVERSE_LEFT:  // Added new 25/05/2024
       setting_car_speed = -5;

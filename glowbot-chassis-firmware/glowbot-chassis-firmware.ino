@@ -18,6 +18,23 @@ Global variables use 1655 bytes (80%) of dynamic memory, leaving 393 bytes for l
 Notes:
 - Saved 6% moving some text strings to flash
 
+
+### line-following:0.1.0 
+Data: 2024-05-26
+`
+Sketch uses 19408 bytes (63%) of program storage space. Maximum is 30720 bytes.
+Global variables use 1805 bytes (88%) of dynamic memory, leaving 243 bytes for local variables. Maximum is 2048 bytes.
+`
+Notes:
+- Line Following
+- Basic search for line if lost
+- Basic obstical avoidance using Ultrasound sensor
+- Issues:
+    - Problem with microswitch obstacle avoidance. 
+      -  Probable mechanical issue, need to trigger with more flex otherwise robot cannot balance
+
+
+
 */
 
 // Program Options Enable/Disable
@@ -48,7 +65,7 @@ autoDelay printDelay;
 
 
 // Navigation Algorithm Variables/Constants
-#define OBSTACLE_LIMIT_CM 35  //    Robot will enter obstacle avoidance mode if this limit is breached
+#define OBSTACLE_LIMIT_CM 25   // 35 was a good medium but shortening to test other things  //    Robot will enter obstacle avoidance mode if this limit is breached
 
 
 #include "globals.h"

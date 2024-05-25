@@ -86,7 +86,7 @@ void lastHighSensor() {
 }
 
 
-void lineLostFunction() {
+void moveBasedOnLastSensor() {
   if (lineLastDetected == LEFT_SENSOR) {
     carNudgeRight();
   } else if (lineLastDetected == RIGHT_SENSOR) {
@@ -94,15 +94,43 @@ void lineLostFunction() {
   }
 }
 
+autoDelay lostDelay;
+
+void lineLostFunction() {
+  if (lostDelay.secondsDelay(1)) {
+    lineLostCount++;
+  }
+  if (lineLostCount <= 10) {
+    moveBasedOnLastSensor();
+  } else if (lineLostCount > 10) {  // this stops it getting stuck in a loop going around in circles
+    carForward();
+  } else if (lineLostCount > 20) {
+    lineLostCount = 0;
+  }
+}
+
 void lineCapturedFunction(uint8_t direction) {
-  if ((direction == 50)&& lnState == LINE_CAPTURED) {
+  // ~TODO try this if without the lnState
+  if ((direction == 50) && lnState == LINE_CAPTURED) {
     carForward();
     //  Serial.println("On Line");
-  } else if (direction <= 48) {
+  } else if (direction <= 48) {  /// was working at 48
     carTurnRight();
+    // carSpeedRight();
     // Serial.println("TURN RIGHT");
-  } else if (direction >= 52) {
+  } else if (direction >= 52) {  // was working at 52
     carTurnLeft();
+    // carSpeedLeft();
+    // Serial.println("TURN LEFT");
+  } else if (direction <= 49) {
+    //carTurnRight();
+    carNudgeRight();
+    // carSpeedRight();
+    // Serial.println("TURN RIGHT")
+  } else if (direction >= 51) {
+    //  carTurnLeft();
+    carNudgeLeft();
+    //carSpeedLeft();
     // Serial.println("TURN LEFT");
   } else if (direction <= 50) {
     carNudgeRight();
@@ -114,45 +142,83 @@ void lineCapturedFunction(uint8_t direction) {
 }
 
 
+void dodgeObstical(){
+if (lostDelay.secondsDelay(1)) {
+      obsticalDetectedCount++;
+    }
+    if (obsticalDetectedCount < 10) {
+      carBackward();
+    } else if (obsticalDetectedCount < 20) {
+      carReverseRight();
+    } else if (obsticalDetectedCount < 30) {
+      carReverseLeft();
+    } else if (obsticalDetectedCount >= 30) {
+      obsticalDetectedCount = 0;
+    }
+}
+
 
 bool lineFollow(uint8_t left, uint8_t center, uint8_t right, uint8_t direction) {
 
+  lastHighSensor();  // Track which sensor detected the line last
 
-
-  if (distance_value <= OBSTACLE_LIMIT_CM) {  // If obstacle is encountered
-    carBackward();
+  if (left < 9 && center < 9 && right < 9) {  // work out if the sensors do not see any line at all
+    lnState = LINE_LOST;
   }
-
-  if (!leftSwitch && !rightSwitch) {  // problem with these calls is no timing to back up a certain amount before switching back to forwards
-    carBackward();
-  } else if (!leftSwitch) {
-    carReverseLeft();
-  } else if (!rightSwitch) {
-    carReverseRight();
-  }
-
-  if (left < 9 && center < 9 && right < 9) {
+  if (left > 140 && center > 140 && right > 140) {  // work out if the sensors do not see any line at all
     lnState = LINE_LOST;
   }
 
-  if (center > 10 || left > 10 || right > 10) {
+  if (center > 10 || left > 10 || right > 10) {  // if any one sensor has detected the line
+    lineLostCount = 0;
     lnState = LINE_CAPTURED;
   }
 
-  lastHighSensor();
 
 
 
   switch (lnState) {
     case LINE_LOST:
       lineLostFunction();
-      return;
+      break;
     case LINE_CAPTURED:
       lineCapturedFunction(direction);
+      break;
+    default:
+      Serial.println(F("Err in lnState"));
+      break;
+  }
+
+
+
+  // Put this last so it overwrites the state set by other functions
+  if (distance_value <= OBSTACLE_LIMIT_CM) {  // If obstacle is encountered
+    obsticalDetected = true;
+  }
+
+  if (distance_value > OBSTACLE_LIMIT_CM + 30) {
+    obsticalDetectedCount = 0;
+    obsticalDetected = false;
+  }
+
+  if (obsticalDetected) {
+
+    dodgeObstical();
+    
   }
 
 
 
 
+
+
+  // This bit isnt working very well at the moment
+  if (!leftSwitch && !rightSwitch) {  // nothing to keep this in these states
+    carBackward();
+  } else if (!leftSwitch) {
+    carReverseLeft();
+  } else if (!rightSwitch) {
+    carReverseRight();
+  }
   return onLine;
 }
