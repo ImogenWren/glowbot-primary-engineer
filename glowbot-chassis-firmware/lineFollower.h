@@ -114,11 +114,11 @@ void lineCapturedFunction(uint8_t direction) {
   if ((direction == 50) && lnState == LINE_CAPTURED) {
     carForward();
     //  Serial.println("On Line");
-  } else if (direction <= 48) {  /// was working at 48
+  } else if (direction <= 48) {  /// was working at 48   // NEED_FOR_SPEED MOD, changed to 45
     carTurnRight();
     // carSpeedRight();
     // Serial.println("TURN RIGHT");
-  } else if (direction >= 52) {  // was working at 52
+  } else if (direction >= 52) {  // was working at 52  // NEED_FOR_SPEED MOD, changed to 55
     carTurnLeft();
     // carSpeedLeft();
     // Serial.println("TURN LEFT");

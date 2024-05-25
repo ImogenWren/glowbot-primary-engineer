@@ -280,7 +280,7 @@ void setMotionState() {
       setting_turn_speed = 0;
       break;
     case BACKWARD:
-      setting_car_speed = -10;
+      setting_car_speed = -15;
       setting_turn_speed = 0;
       break;
     case TURNLEFT:
