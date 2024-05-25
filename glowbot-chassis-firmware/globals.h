@@ -45,6 +45,33 @@ char stateNames[][20] = {
 };
 
 
+typedef enum {
+  LINE_LOST,
+  LINE_CAPTURED,
+  LINE_FOUND_LEFT,
+  LINE_FOUND_RIGHT
+} lineState;
+
+lineState lnState;
+
+char lineStateName[][10]{
+  "LOST",
+  "CAPTURED",
+  "FOUND_LEFT",
+  "FOUND_RIGHT",
+};
+
+
+typedef enum {
+  NULL_VALUE,
+  LEFT_SENSOR,
+  CENTER_SENSOR,
+  RIGHT_SENSOR
+} lineSensor;
+
+lineSensor lineLastDetected = NULL_VALUE;
+
+
 // Global Variables
 
 bool carParked = false;
@@ -77,11 +104,11 @@ void printStatus() {
     Serial.print(motionModeName[motion_mode]);
     //    Serial.print(F(" Gyro: "));
     //    Serial.print(kalmanfilter.angle);
-    Serial.print(F(", Ping: "));
-    Serial.print(distance_value);
-    Serial.print(F(" cm"));
-    Serial.print(F(", Batt: "));
-    Serial.print(voltage);
+    //   Serial.print(F(", Ping: "));
+    //   Serial.print(distance_value);
+    //Serial.print(F(" cm"));
+     Serial.print(F(", Batt: "));
+     Serial.print(voltage);
     Serial.print(F(", "));
     Serial.print(F(" Line: "));
     Serial.print(leftLine);
@@ -92,9 +119,9 @@ void printStatus() {
     Serial.print(F(", "));
     Serial.print(lineDirection);
     Serial.print(F(", "));
-    Serial.print(F("On Line: "));
-    Serial.print(onLine);
-    Serial.print(F("Switch: "));
+    Serial.print(F("lnState: "));
+    Serial.print(lineStateName[lnState]);
+    Serial.print(F(" Switch: "));
     Serial.print(leftSwitch);
     Serial.print(F(", "));
     Serial.print(rightSwitch);
@@ -157,10 +184,26 @@ void carNudgeRight() {
   motion_mode = NUDGERIGHT;
 }
 
+void carReverseLeft() {
+  rgb.flashRedColor();
+  motion_mode = REVERSE_LEFT;
+}
+
+void carReverseRight() {
+  rgb.flashRedColor();
+  motion_mode = REVERSE_RIGHT;
+}
+
 void carStopNow() {
   rgb.flashYellowColorFront();
   rgb.flashYellowColorback();
   motion_mode = STOP;
+}
+
+void freeDrive() {
+  rgb.flashGreenColorFront();
+  rgb.flashGreenColorback();
+  motion_mode = FREEDRIVE;
 }
 
 
@@ -211,6 +254,20 @@ void setMotionState() {
     case NUDGERIGHT:  // Added new 24/05/2024
       setting_car_speed = 5;
       setting_turn_speed = -20;
+      break;
+    case REVERSE_LEFT:  // Added new 25/05/2024
+      setting_car_speed = -5;
+      setting_turn_speed = -20;
+      break;
+    case REVERSE_RIGHT:  // Added new 25/05/2024
+      setting_car_speed = -5;
+      setting_turn_speed = 20;
+      break;
+
+
+    case FREEDRIVE:  // Added new 25/05/2024
+      //setting_car_speed = 5;    // car speed and turns should be set via algorythm
+      // setting_turn_speed = -20;
       break;
     case STANDBY:
       setting_car_speed = 0;

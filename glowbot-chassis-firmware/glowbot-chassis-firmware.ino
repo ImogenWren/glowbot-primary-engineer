@@ -92,7 +92,7 @@ void sm_state_init() {
   }
   if (carParked && !low_voltage_flag) {            // If car is parked and does not have low voltage detected
     if (stateDelay.millisDelay(UNPARK_WAIT_mS)) {  // Dleay for UNPARK_WAIT_mS milliseconds
-      smState = STATE_UNPARK;
+   //   smState = STATE_UNPARK;
     }                                                       // Go to unpark state
   } else if (stateDelay.millisDelay(UNPARK_WAIT_mS * 2)) {  // else if timer runs out then go to wait state
     smState = STATE_WAIT;
@@ -155,17 +155,15 @@ void sm_state_followline(uint8_t left, uint8_t center, uint8_t right, uint8_t di
     lastState = smState;
   }
 
-  bool line = lineFollow(left, center, right, direction);
-  if (!line) {
-    //  smState = STATE_REVERSE;
-    //  nextState = STATE_FOLLOWLINE;
-  }
-  if (distance_value <= OBSTACLE_LIMIT_CM) {  // If obstacle is encountered
+  lineFollow(left, center, right, direction);
+
+ //  Everything below should be handled within the lineFollow algorythem, dont move from linefollow to deal with obstacles
+  // if (distance_value <= OBSTACLE_LIMIT_CM) {  // If obstacle is encountered
     // Provide clause to exit state
     // or provide following state to goto direct
-    smState = STATE_PATHBLOCKED;
-    nextState = STATE_FOLLOWLINE;  // tells statemachine where to go back to
-  }
+ //   smState = STATE_PATHBLOCKED;
+ //   nextState = STATE_FOLLOWLINE;  // tells statemachine where to go back to
+ //}
 }
 
 #define OBSTACLE_TIMEOUT_S 5
