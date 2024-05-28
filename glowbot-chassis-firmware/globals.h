@@ -276,7 +276,7 @@ void unparkCar() {
 void setMotionState() {
   switch (motion_mode) {
     case FORWARD:
-      setting_car_speed = 15;  // origionally 40 // working at 10 // testing at 15 kinda worked/ trying at 20
+      setting_car_speed = 12;  // origionally 40 // working at 10 // testing at 15 kinda worked/ trying at 20
       setting_turn_speed = 0;
       break;
     case BACKWARD:
