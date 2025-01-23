@@ -169,7 +169,7 @@ bool rightSwitchState;
 
 
 autoDelay sampleDelay;
-#define SENSOR_SAMPLERATE_mS 300
+#define SENSOR_SAMPLERATE_mS 200
 // Gather and sort all local sensors into data structure to send via UART to local periferal device
 void gatherSensors() {
   if (sampleDelay.millisDelay(SENSOR_SAMPLERATE_mS)) {
